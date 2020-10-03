@@ -1,3 +1,4 @@
+import { TestPrompt } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
 export type DialogEvent = SpeakEvent | PromptEvent;
@@ -9,26 +10,29 @@ export type SpeakEvent = {
 }
 
 export type PromptEvent = {
-  prompt: PromptType;
+  options: PromptOption[];
   type: "prompt";
 }
+
+export type PromptOption = {
+  text: string;
+  nextDialog: DialogEvent[];
+}
+
+export const PromptSelectionKeys = ["A", "S", "D", "F", "Z", "X", "C", "V"] as const;
 
 export type CinematicArgs = {
   setEvents: React.Dispatch<React.SetStateAction<DialogEvent[]>>;
   events: DialogEvent[];
 
-  setDialogLineFinished: React.Dispatch<React.SetStateAction<boolean>>;
-  dialogLineFinished: boolean;
+  setShowDialogLineFinishedMessage: React.Dispatch<React.SetStateAction<boolean>>;
+  showDialogLineFinishedMessage: boolean;
+
+  setShowPromptFinishedMessage: React.Dispatch<React.SetStateAction<boolean>>;
+  showPromptFinishedMessage: boolean;
 };
 
 export type Cinematic<T = void> = Generator<"next", T, CinematicArgs>;
-
-export type PromptType = {
-  options: {
-    text: string;
-    nextDialog: DialogEvent[];
-  }[];
-};
 
 export function* runSpeakEvent(event: SpeakEvent): Cinematic {
   let actions = yield "next";
@@ -87,24 +91,65 @@ export function* runEvents(events: DialogEvent[]): Cinematic {
     if (event.type === "dialog") {
       yield* runSpeakEvent(event);
 
-      actions.setDialogLineFinished(true);
+      actions.setShowDialogLineFinishedMessage(true);
       yield* waitForKey("Spacebar");
-      actions.setDialogLineFinished(false);
+      actions.setShowDialogLineFinishedMessage(false);
     } else if (event.type === "prompt") {
       yield* runPromptEvent(event)
     }
   }
 }
 
-export function* runPromptEvent(event: PromptEvent): Cinematic {
+export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   let actions = yield "next";
+
+  const newEvent: PromptEvent = {
+    options: [],
+    type: "prompt",
+  };
+
+  for (const option of promptEvent.options) {
+    const newOption: PromptOption = {
+      nextDialog: option.nextDialog,
+      text: "",
+    };
+    newEvent.options.push(newOption);
+
+    for (const character of option.text) {
+      newOption.text += character;
+
+      actions.setEvents([
+        ...actions.events,
+        newEvent,
+      ]);
+
+      yield "next";
+    }
+  }
 
   actions.setEvents([
     ...actions.events,
-    event,
-  ])
+    newEvent,
+  ]);
 
-  const selection = yield* waitForKeys(["A", "S"]);
+  const numberOfOptions = promptEvent.options.length;
+
+  actions.setShowPromptFinishedMessage(true);
+  const selection = yield* waitForKeys(PromptSelectionKeys.slice(0, numberOfOptions));
+  actions.setShowPromptFinishedMessage(false);
+
+  const selectedOptionIndex = PromptSelectionKeys.indexOf(selection as any);
+  const selectedOption = promptEvent.options[selectedOptionIndex];
+
+  debugger;
+
+  if (selectedOptionIndex === -1) {
+    debugger;
+  }
+
+  // TODO: Update prompt visually to indicate you have selected this one. 
+
+  yield* runEvents(selectedOption.nextDialog);
 }
 
 export function* displayText(): Cinematic {
@@ -130,19 +175,5 @@ export function* displayText(): Cinematic {
   //   },
   // ]);
 
-  yield* runPromptEvent({
-    prompt: {
-      options: [
-        {
-          text: "Eat a chicken",
-          nextDialog: [],
-        },
-        {
-          text: "Don't",
-          nextDialog: [],
-        },
-      ],
-    },
-    type: "prompt",
-  })
+  yield* runPromptEvent(TestPrompt)
 }

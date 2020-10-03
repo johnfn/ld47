@@ -5,7 +5,7 @@ import Background from './img_placeholder.png';
 import { Clock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
-import { Cinematic, DialogEvent, displayText, PromptType } from './Cinematics';
+import { Cinematic, DialogEvent, displayText } from './Cinematics';
 import { Keyboard } from './Keyboard';
 
 const locationStuff = {
@@ -34,7 +34,7 @@ const App = () => {
 
   const [cinematics, setCinematics] = React.useState<Cinematic[]>([]);
   const [dialogLineFinished, setDialogLineFinished] = React.useState(false);
-  const [prompt, setPrompt] = React.useState<PromptType | null>(null);
+  const [promptFinished, setPromptFinished] = React.useState(false);
 
   useEffect(() => {
     const runCinematic = (cinematic: Cinematic) => {
@@ -54,8 +54,10 @@ const App = () => {
       cinematic.next({
         setEvents: setEvents,
         events: events,
-        dialogLineFinished,
-        setDialogLineFinished,
+        showDialogLineFinishedMessage: dialogLineFinished,
+        setShowDialogLineFinishedMessage: setDialogLineFinished,
+        showPromptFinishedMessage: promptFinished,
+        setShowPromptFinishedMessage: setPromptFinished,
       });
     }
   }, 50);
@@ -81,6 +83,7 @@ const App = () => {
         <PortraitAndDialogBox
           events={events}
           dialogLineFinished={dialogLineFinished}
+          promptFinished={promptFinished}
         />
       </div>
     </div >

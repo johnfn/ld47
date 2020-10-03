@@ -1,24 +1,16 @@
 import React from 'react';
-import { DialogEvent, PromptEvent, SpeakEvent } from './Cinematics';
+import { DialogEvent, PromptEvent, PromptSelectionKeys, SpeakEvent } from './Cinematics';
 import { Dialog } from './Dialog'
 import Portrait from './portrait2.png';
 
-const Prompt: React.FC<{ event: PromptEvent }> = ({ event }) => {
-  const keys = [
-    'A',
-    'S',
-    'D',
-    'F',
-  ];
-  const prompt = event.prompt;
-
+const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
   return (
     <div>
       {
         prompt.options.map((option, i) =>
           <div style={{ display: 'flex' }}>
             <div style={{ flex: '0 0 20px' }}>
-              <strong>{keys[i]}</strong>:
+              <strong>{PromptSelectionKeys[i]}</strong>:
             </div>
 
             <div style={{ flex: '1 0 0' }}>
@@ -31,9 +23,10 @@ const Prompt: React.FC<{ event: PromptEvent }> = ({ event }) => {
   )
 };
 
-export const PortraitAndDialogBox = ({ events, dialogLineFinished }: {
+export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinished }: {
   events: DialogEvent[];
   dialogLineFinished: boolean;
+  promptFinished: boolean;
 }) => {
   const speakingEvents: SpeakEvent[] = [];
   const promptEvents: PromptEvent[] = [];
@@ -71,12 +64,22 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished }: {
         dialogLineFinished &&
         <div style={{ color: 'lightgray', paddingTop: '20px' }}>
           Space to continue
-          </div>
+        </div>
       }
 
       {
         promptEvents[0] &&
-        <Prompt event={promptEvents[0]} />
+        <div>
+          <Prompt prompt={promptEvents[0]} />
+
+          {
+            promptFinished &&
+            <div style={{ color: 'lightgray', paddingTop: '20px' }}>
+              Choose an action to continue
+            </div>
+          }
+
+        </div>
       }
     </div>
 

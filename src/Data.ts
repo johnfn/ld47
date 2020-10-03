@@ -1,4 +1,4 @@
-import { DialogEvent } from "./Cinematics";
+import { DialogEvent, PromptEvent } from "./Cinematics";
 
 const eatChicken: DialogEvent[] = [
   {
@@ -28,18 +28,17 @@ const dontEatChicken: DialogEvent[] = [
   },
 ]
 
-const prompt: DialogEvent = {
-  prompt: {
-    options: [
-      {
-        text: "Eat a chicken",
-        nextDialog: eatChicken,
-      },
-      {
-        text: "Don't",
-        nextDialog: dontEatChicken,
-      },
-    ],
-  },
+export const TestPrompt: PromptEvent = {
   type: "prompt",
+
+  options: [
+    {
+      text: "Eat a chicken",
+      nextDialog: eatChicken,
+    },
+    {
+      text: "Don't",
+      nextDialog: dontEatChicken,
+    },
+  ],
 };
