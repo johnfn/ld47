@@ -57,7 +57,13 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
       border: '1px solid black'
     }}>
       {
-        speakingEvents.map(d => { return <Dialog event={d} /> })
+        events.map(event => {
+          if (event.type === "dialog") {
+            return <Dialog event={event} />
+          } else if (event.type === "prompt") {
+            return <Prompt prompt={event} />;
+          }
+        })
       }
 
       {
@@ -68,20 +74,11 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
       }
 
       {
-        promptEvents[0] &&
-        <div>
-          <Prompt prompt={promptEvents[0]} />
-
-          {
-            promptFinished &&
-            <div style={{ color: 'lightgray', paddingTop: '20px' }}>
-              Choose an action to continue
+        promptFinished &&
+        <div style={{ color: 'lightgray', paddingTop: '20px' }}>
+          Choose an action to continue
             </div>
-          }
-
-        </div>
       }
     </div>
-
   </div >);
 }
