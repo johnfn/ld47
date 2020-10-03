@@ -64,6 +64,7 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
       <div style={{
         display: "flex",
         flexDirection: "column",
+        justifyContent: "space-between",
         padding: 20,
         width: 220,
         backgroundColor: "white",
@@ -97,7 +98,7 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
             </div>
           }
         </div>
-        <div style={{ margin: "auto" }}>inventory | map | talk</div>
+        <div style={{ margin: " 0 auto" }}>inventory | map | talk</div>
       </div>
     </div >);
 }
