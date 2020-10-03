@@ -1,38 +1,6 @@
-import { TestPrompt } from "./Data";
+import { SpeakEvent, Cinematic, DialogEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location } from "./CinematicTypes";
+import { Locations, TestPrompt } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
-
-export type DialogEvent = SpeakEvent | PromptEvent;
-
-export type SpeakEvent = {
-  speaker: string;
-  text: string;
-  type: "dialog"
-}
-
-export type PromptEvent = {
-  options: PromptOption[];
-  type: "prompt";
-}
-
-export type PromptOption = {
-  text: string;
-  nextDialog: DialogEvent[];
-}
-
-export const PromptSelectionKeys = ["A", "S", "D", "F", "Z", "X", "C", "V"] as const;
-
-export type CinematicArgs = {
-  setEvents: React.Dispatch<React.SetStateAction<DialogEvent[]>>;
-  events: DialogEvent[];
-
-  setShowDialogLineFinishedMessage: React.Dispatch<React.SetStateAction<boolean>>;
-  showDialogLineFinishedMessage: boolean;
-
-  setShowPromptFinishedMessage: React.Dispatch<React.SetStateAction<boolean>>;
-  showPromptFinishedMessage: boolean;
-};
-
-export type Cinematic<T = void> = Generator<"next", T, CinematicArgs>;
 
 export function* runSpeakEvent(event: SpeakEvent): Cinematic {
   let actions = yield "next";
@@ -60,6 +28,11 @@ export function* runSpeakEvent(event: SpeakEvent): Cinematic {
       type: "dialog",
     },
   ]);
+
+
+  actions.setShowDialogLineFinishedMessage(true);
+  yield* waitForKey("Spacebar");
+  actions.setShowDialogLineFinishedMessage(false);
 }
 
 export function* waitForKey(key: KeyName): Cinematic {
@@ -90,10 +63,6 @@ export function* runEvents(events: DialogEvent[]): Cinematic {
   for (const event of events) {
     if (event.type === "dialog") {
       yield* runSpeakEvent(event);
-
-      actions.setShowDialogLineFinishedMessage(true);
-      yield* waitForKey("Spacebar");
-      actions.setShowDialogLineFinishedMessage(false);
     } else if (event.type === "prompt") {
       yield* runPromptEvent(event)
     }
@@ -141,15 +110,25 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   const selectedOptionIndex = PromptSelectionKeys.indexOf(selection as any);
   const selectedOption = promptEvent.options[selectedOptionIndex];
 
-  debugger;
-
-  if (selectedOptionIndex === -1) {
-    debugger;
-  }
+  if (selectedOptionIndex === -1) { alert("AAAAAAA"); }
 
   // TODO: Update prompt visually to indicate you have selected this one. 
 
   yield* runEvents(selectedOption.nextDialog);
+}
+
+export function* runChangeLocation(location: Location): Cinematic {
+  const actions = yield "next";
+
+  actions.setActiveLocation(location);
+
+  for (const text of location.description) {
+    yield* runSpeakEvent({
+      speaker: "Narrator",
+      text,
+      type: "dialog",
+    })
+  }
 }
 
 export function* displayText(): Cinematic {
@@ -175,5 +154,6 @@ export function* displayText(): Cinematic {
   //   },
   // ]);
 
-  yield* runPromptEvent(TestPrompt)
+  // yield* runPromptEvent(TestPrompt)
+  yield* runChangeLocation(Locations.Bar);
 }

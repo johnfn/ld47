@@ -18,22 +18,21 @@ const months: { [key: number]: string } = {
 
 export const Clock = (props: {}) => {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const startDate = new Date(Date.parse('14 April 2012 00:10:14 PST'));
-
-  const [currentDate, setCurrentDate] = React.useState(startDate);
+  const [currentDate, setCurrentDate] = React.useState(new Date(Date.parse('14 April 2012 10:10:14 PST')));
+  const [timeString, setTimeString] = React.useState("");
+  const [dateString, setDateString] = React.useState("");
 
   useInterval(() => {
-    setCurrentDate((prevDate) => {
-      prevDate.setMilliseconds(prevDate.getMilliseconds() + 10 * 50);
+    setCurrentDate(prevDate => {
+      prevDate.setMilliseconds(currentDate.getMilliseconds() + 10 * 50);
       return prevDate;
     })
+    setTimeString(`${currentDate.toLocaleTimeString().split(" ")[0].slice(0, -3)} ${currentDate.toLocaleTimeString().split(" ")[1]}`);
+    setDateString(`${currentDate.toLocaleDateString("en-US", options).split(",")[1]}`);
   }, 50);
 
-  const timeString = `${currentDate.toLocaleTimeString().split(" ")[0].slice(0, -3)} ${currentDate.toLocaleTimeString().split(" ")[1]}`;
-  const dateString = `${currentDate.toLocaleDateString("en-US", options).split(",")[1]}`;
-
   return (<div style={{ width: 150 }}>
-    <div style={{ backgroundColor: "white", border: '1px solid black', height: 50 }}>{timeString}</div>
+    <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>{timeString}</div>
     <div style={{ backgroundColor: "white", border: '1px solid black', alignSelf: "flex-end", width: 80 }}>{dateString}</div>
   </div>
   )

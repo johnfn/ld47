@@ -1,45 +1,47 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import useInterval from './ use_interval';
-import './App.css';
-import Background from './img_placeholder.png';
+import Background from './images/img_placeholder.png';
 import { Clock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
-import { Cinematic, DialogEvent, displayText } from './Cinematics';
+import { displayText } from './Cinematics';
 import { Keyboard } from './Keyboard';
+import { DialogEvent, Cinematic, Location } from './CinematicTypes';
+import { Locations } from './Data';
+import { useWhyDidYouUpdate } from './WhyDidYouUpdate';
 
-const locationStuff = {
-  'Bar': {
-    description: [
-      'You walk into the bar. It smells.',
-      'You wonder why you came here in the first place.',
-    ],
-    people: [
-      'Bartender',
-      'Guy 2',
-    ],
-    exits: [
-      'outdoors',
-      'secret passageway',
-    ],
-  },
-};
+export type CinematicState = {
+  type: 'can-run-cinematic';
+  runCinematic: (cinematic: Cinematic) => void;
+} | {
+  type: 'already-running-cinematic';
+  cinematic: Cinematic;
+}
 
 const App = () => {
-  const [events, setEvents] = React.useState<DialogEvent[]>([{
-    speaker: "You",
-    text: "",
-    type: "dialog",
-  }]);
+  const [events, setEvents] = React.useState<DialogEvent[]>([]);
 
-  const [cinematics, setCinematics] = React.useState<Cinematic[]>([]);
   const [dialogLineFinished, setDialogLineFinished] = React.useState(false);
-  const [promptFinished, setPromptFinished] = React.useState(false);
+  const [showPromptFinishedMessage, setShowPromptFinishedMessage] = React.useState(false);
+  const [activeLocation, setActiveLocation] = React.useState<Location>(Locations.Bar);
+
+  const [cinematicState, setCinematicState] = React.useState<CinematicState>({
+    type: 'can-run-cinematic',
+    runCinematic: null as any, // circular dependency makes this tricky
+  });
+
+  const runCinematic = useCallback((cinematic: Cinematic) => {
+    setCinematicState({
+      type: "already-running-cinematic",
+      cinematic,
+    });
+  }, [cinematicState.type]);
 
   useEffect(() => {
-    const runCinematic = (cinematic: Cinematic) => {
-      setCinematics([...cinematics, cinematic])
-    };
+    setCinematicState({
+      type: 'can-run-cinematic',
+      runCinematic: runCinematic,
+    });
 
     runCinematic(displayText());
   }, []);
@@ -49,18 +51,26 @@ const App = () => {
   useInterval(() => {
     Keyboard.update();
 
-    // TODO: cull finished cinematics
-    for (const cinematic of cinematics) {
-      cinematic.next({
+    if (cinematicState.type === "already-running-cinematic") {
+      const result = cinematicState.cinematic.next({
         setEvents: setEvents,
         events: events,
         showDialogLineFinishedMessage: dialogLineFinished,
         setShowDialogLineFinishedMessage: setDialogLineFinished,
-        showPromptFinishedMessage: promptFinished,
-        setShowPromptFinishedMessage: setPromptFinished,
+        showPromptFinishedMessage,
+        setShowPromptFinishedMessage,
+        activeLocation,
+        setActiveLocation,
       });
+
+      if (result.done) {
+        setCinematicState({
+          type: 'can-run-cinematic',
+          runCinematic: runCinematic,
+        });
+      }
     }
-  }, 50);
+  }, 20);
 
   return (
     <div style={{
@@ -77,20 +87,18 @@ const App = () => {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', }}>
           <Clock />
-          <PortraitAndActions />
+          <PortraitAndActions cinematicState={cinematicState} location={activeLocation} />
         </div>
 
         <PortraitAndDialogBox
           events={events}
           dialogLineFinished={dialogLineFinished}
-          promptFinished={promptFinished}
+          promptFinished={showPromptFinishedMessage}
         />
       </div>
-    </div >
+    </div>
   );
 }
-
-
 
 // hehehehehehehe
 // HEHE browser

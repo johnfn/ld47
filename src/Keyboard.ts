@@ -72,6 +72,10 @@ class KeyboardState {
   }
 
   private keyDown(e: KeyboardEvent): void {
+    // disable space scrolling
+    if (e.keyCode == 32 && e.target == document.body) {
+      e.preventDefault();
+    }
     this._queuedEvents.push({ event: e, isDown: true });
   }
 
