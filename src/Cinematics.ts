@@ -14,13 +14,11 @@ export type PromptEvent = {
 }
 
 export type CinematicArgs = {
-  setDialog: React.Dispatch<React.SetStateAction<DialogEvent[]>>;
-  dialog: DialogEvent[];
+  setEvents: React.Dispatch<React.SetStateAction<DialogEvent[]>>;
+  events: DialogEvent[];
 
   setDialogLineFinished: React.Dispatch<React.SetStateAction<boolean>>;
   dialogLineFinished: boolean;
-
-  setPrompt: React.Dispatch<React.SetStateAction<PromptType | null>>;
 };
 
 export type Cinematic<T = void> = Generator<"next", T, CinematicArgs>;
@@ -37,11 +35,11 @@ export function* runSpeakEvent(event: SpeakEvent): Cinematic {
 
   const { speaker, text } = event;
   const dialogResult: SpeakEvent = { speaker, text: "", type: "dialog" };
-  const startingDialog = actions.dialog;
+  const startingDialog = actions.events;
 
   for (const character of text) {
     dialogResult.text += character;
-    actions.setDialog([...startingDialog, dialogResult]);
+    actions.setEvents([...startingDialog, dialogResult]);
 
     if (Keyboard.justDown.Spacebar) {
       break;
@@ -50,7 +48,7 @@ export function* runSpeakEvent(event: SpeakEvent): Cinematic {
     yield "next";
   }
 
-  actions.setDialog([
+  actions.setEvents([
     ...startingDialog,
     {
       speaker,
@@ -101,7 +99,10 @@ export function* runEvents(events: DialogEvent[]): Cinematic {
 export function* runPromptEvent(event: PromptEvent): Cinematic {
   let actions = yield "next";
 
-  actions.setPrompt(event.prompt);
+  actions.setEvents([
+    ...actions.events,
+    event,
+  ])
 
   const selection = yield* waitForKeys(["A", "S"]);
 }

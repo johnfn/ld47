@@ -52,15 +52,12 @@ const App = () => {
     // TODO: cull finished cinematics
     for (const cinematic of cinematics) {
       cinematic.next({
-        setDialog: setEvents,
-        dialog: events,
+        setEvents: setEvents,
+        events: events,
         dialogLineFinished,
         setDialogLineFinished,
-        setPrompt,
       });
     }
-
-    console.log(cinematics);
   }, 50);
 
   return (
