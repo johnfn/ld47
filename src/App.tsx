@@ -5,13 +5,8 @@ import Background from './img_placeholder.png';
 import { Clock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
-import { Cinematic, displayText, PromptType } from './Cinematics';
+import { Cinematic, DialogEvent, displayText, PromptType } from './Cinematics';
 import { Keyboard } from './Keyboard';
-
-export type DialogType = {
-  speaker: string;
-  text: string;
-}
 
 const locationStuff = {
   'Bar': {
@@ -31,20 +26,21 @@ const locationStuff = {
 };
 
 const App = () => {
-  const [dialog, setDialog] = React.useState([{
+  const [events, setEvents] = React.useState<DialogEvent[]>([{
     speaker: "You",
     text: "",
+    type: "dialog",
   }]);
 
   const [cinematics, setCinematics] = React.useState<Cinematic[]>([]);
   const [dialogLineFinished, setDialogLineFinished] = React.useState(false);
   const [prompt, setPrompt] = React.useState<PromptType | null>(null);
 
-  const runCinematic = (cinematic: Cinematic) => {
-    setCinematics([...cinematics, cinematic])
-  };
-
   useEffect(() => {
+    const runCinematic = (cinematic: Cinematic) => {
+      setCinematics([...cinematics, cinematic])
+    };
+
     runCinematic(displayText());
   }, []);
 
@@ -56,8 +52,8 @@ const App = () => {
     // TODO: cull finished cinematics
     for (const cinematic of cinematics) {
       cinematic.next({
-        setDialog,
-        dialog,
+        setDialog: setEvents,
+        dialog: events,
         dialogLineFinished,
         setDialogLineFinished,
         setPrompt,
@@ -86,8 +82,7 @@ const App = () => {
         </div>
 
         <PortraitAndDialogBox
-          dialog={dialog}
-          prompt={prompt}
+          events={events}
           dialogLineFinished={dialogLineFinished}
         />
       </div>

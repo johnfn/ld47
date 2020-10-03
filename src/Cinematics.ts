@@ -1,10 +1,21 @@
-import { Key } from "react";
-import { DialogType } from "./App";
 import { Keyboard, KeyName } from "./Keyboard";
 
+export type DialogEvent = SpeakEvent | PromptEvent;
+
+export type SpeakEvent = {
+  speaker: string;
+  text: string;
+  type: "dialog"
+}
+
+export type PromptEvent = {
+  prompt: PromptType;
+  type: "prompt";
+}
+
 export type CinematicArgs = {
-  setDialog: React.Dispatch<React.SetStateAction<{ speaker: string; text: string; }[]>>;
-  dialog: DialogType[];
+  setDialog: React.Dispatch<React.SetStateAction<DialogEvent[]>>;
+  dialog: DialogEvent[];
 
   setDialogLineFinished: React.Dispatch<React.SetStateAction<boolean>>;
   dialogLineFinished: boolean;
@@ -17,15 +28,15 @@ export type Cinematic<T = void> = Generator<"next", T, CinematicArgs>;
 export type PromptType = {
   options: {
     text: string;
-    nextDialog: DialogType[];
+    nextDialog: DialogEvent[];
   }[];
 };
 
-export function* speakSingleDialog(dialog: DialogType): Cinematic {
+export function* runSpeakEvent(event: SpeakEvent): Cinematic {
   let actions = yield "next";
 
-  const { speaker, text } = dialog;
-  const dialogResult: DialogType = { speaker, text: "" };
+  const { speaker, text } = event;
+  const dialogResult: SpeakEvent = { speaker, text: "", type: "dialog" };
   const startingDialog = actions.dialog;
 
   for (const character of text) {
@@ -44,6 +55,7 @@ export function* speakSingleDialog(dialog: DialogType): Cinematic {
     {
       speaker,
       text,
+      type: "dialog",
     },
   ]);
 }
@@ -70,22 +82,26 @@ export function* waitForKeys(keys: KeyName[]): Cinematic<KeyName> {
   }
 }
 
-export function* speakMultipleDialog(dialogs: DialogType[]): Cinematic {
+export function* runEvents(events: DialogEvent[]): Cinematic {
   let actions = yield "next";
 
-  for (const dialog of dialogs) {
-    yield* speakSingleDialog(dialog);
+  for (const event of events) {
+    if (event.type === "dialog") {
+      yield* runSpeakEvent(event);
 
-    actions.setDialogLineFinished(true);
-    yield* waitForKey("Spacebar");
-    actions.setDialogLineFinished(false);
+      actions.setDialogLineFinished(true);
+      yield* waitForKey("Spacebar");
+      actions.setDialogLineFinished(false);
+    } else if (event.type === "prompt") {
+      yield* runPromptEvent(event)
+    }
   }
 }
 
-export function* prompt(prompt: PromptType): Cinematic {
+export function* runPromptEvent(event: PromptEvent): Cinematic {
   let actions = yield "next";
 
-  actions.setPrompt(prompt);
+  actions.setPrompt(event.prompt);
 
   const selection = yield* waitForKeys(["A", "S"]);
 }
@@ -113,16 +129,19 @@ export function* displayText(): Cinematic {
   //   },
   // ]);
 
-  yield* prompt({
-    options: [
-      {
-        text: "Eat a chicken",
-        nextDialog: [],
-      },
-      {
-        text: "Don't",
-        nextDialog: [],
-      },
-    ],
+  yield* runPromptEvent({
+    prompt: {
+      options: [
+        {
+          text: "Eat a chicken",
+          nextDialog: [],
+        },
+        {
+          text: "Don't",
+          nextDialog: [],
+        },
+      ],
+    },
+    type: "prompt",
   })
 }

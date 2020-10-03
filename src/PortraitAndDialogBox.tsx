@@ -1,16 +1,16 @@
 import React from 'react';
-import { DialogType } from './App';
-import { PromptType } from './Cinematics';
+import { DialogEvent, PromptEvent, SpeakEvent } from './Cinematics';
 import { Dialog } from './Dialog'
 import Portrait from './portrait2.png';
 
-const Prompt: React.FC<{ prompt: PromptType }> = ({ prompt }) => {
+const Prompt: React.FC<{ event: PromptEvent }> = ({ event }) => {
   const keys = [
     'A',
     'S',
     'D',
     'F',
   ];
+  const prompt = event.prompt;
 
   return (
     <div>
@@ -31,11 +31,21 @@ const Prompt: React.FC<{ prompt: PromptType }> = ({ prompt }) => {
   )
 };
 
-export const PortraitAndDialogBox = ({ dialog, dialogLineFinished, prompt }: {
-  dialog: DialogType[];
+export const PortraitAndDialogBox = ({ events, dialogLineFinished }: {
+  events: DialogEvent[];
   dialogLineFinished: boolean;
-  prompt: PromptType | null;
 }) => {
+  const speakingEvents: SpeakEvent[] = [];
+  const promptEvents: PromptEvent[] = [];
+
+  for (const event of events) {
+    if (event.type === "dialog") {
+      speakingEvents.push(event);
+    } else if (event.type === "prompt") {
+      promptEvents.push(event);
+    }
+  }
+
   return (<div style={{ display: 'flex', flex: '0 0 400px' }}>
     <div
       style={{
@@ -54,7 +64,7 @@ export const PortraitAndDialogBox = ({ dialog, dialogLineFinished, prompt }: {
       border: '1px solid black'
     }}>
       {
-        dialog.map(d => { return <Dialog speaker={d.speaker} text={d.text} /> })
+        speakingEvents.map(d => { return <Dialog event={d} /> })
       }
 
       {
@@ -65,8 +75,8 @@ export const PortraitAndDialogBox = ({ dialog, dialogLineFinished, prompt }: {
       }
 
       {
-        prompt &&
-        <Prompt prompt={prompt} />
+        promptEvents[0] &&
+        <Prompt event={promptEvents[0]} />
       }
     </div>
 
