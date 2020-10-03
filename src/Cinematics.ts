@@ -1,18 +1,30 @@
-import { SpeakEvent, Cinematic, DialogEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent } from "./CinematicTypes";
-import { Locations } from "./Data";
+import { SpeakEvent, Cinematic, DialogEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent, DescribeEvent, BackgroundEvent } from "./CinematicTypes";
+import { eatChicken, Locations } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
-export function* runSpeakEvent(event: SpeakEvent): Cinematic {
+export function* runSpeakEvent(event: SpeakEvent | BackgroundEvent, props: { background?: boolean } = {}): Cinematic {
+  const background = props?.background;
   let actions = yield "next";
   const timeString = actions.timeString;
 
   const { speaker, text } = event;
   const dialogResult: SpeakEvent = { speaker, text: "", type: "dialog", timeString: timeString };
-  const startingDialog = actions.events;
+  let index = -1;
+
+  actions.setEvents(oldEvents => {
+    index = oldEvents.length;
+
+    return [...oldEvents, dialogResult];
+  });
 
   for (const character of text) {
     dialogResult.text += character;
-    actions.setEvents([...startingDialog, dialogResult]);
+    actions.setEvents(oldEvents => {
+      const newEvents = [...oldEvents];
+
+      newEvents[index] = dialogResult;
+      return newEvents;
+    });
 
     if (Keyboard.justDown.Spacebar) {
       break;
@@ -21,20 +33,23 @@ export function* runSpeakEvent(event: SpeakEvent): Cinematic {
     actions = yield "next";
   }
 
-  actions.setEvents([
-    ...startingDialog,
-    {
+  actions.setEvents(oldEvents => {
+    const newEvents = [...oldEvents];
+    newEvents[index] = {
       speaker,
       text,
       type: "dialog",
       timeString: timeString,
-    },
-  ]);
+    }
 
+    return newEvents;
+  });
 
-  actions.setShowDialogLineFinishedMessage(true);
-  yield* waitForKey("Spacebar");
-  actions.setShowDialogLineFinishedMessage(false);
+  if (!background) {
+    actions.setShowDialogLineFinishedMessage(true);
+    yield* waitForKey("Spacebar");
+    actions.setShowDialogLineFinishedMessage(false);
+  }
 }
 
 export function* waitForKey(key: KeyName): Cinematic {
@@ -69,6 +84,8 @@ export function* runEvents(events: DialogEvent[]): Cinematic {
       yield* runPromptEvent(event)
     } else if (event.type === "action") {
       yield* runActionEvent(event)
+    } else if (event.type === "background-event") {
+      yield* runSpeakEvent(event, { background: true })
     }
   }
 }
@@ -80,30 +97,42 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
     options: [],
     type: "prompt",
   };
+  let index = -1;
+
+  actions.setEvents(oldActions => {
+    index = oldActions.length;
+
+    return [...oldActions, newEvent];
+  });
 
   for (const option of promptEvent.options) {
     const newOption: PromptOption = {
       nextDialog: option.nextDialog,
       text: "",
     };
+
     newEvent.options.push(newOption);
 
     for (const character of option.text) {
       newOption.text += character;
 
-      actions.setEvents([
-        ...actions.events,
-        newEvent,
-      ]);
+      actions.setEvents(oldActions => {
+        const newActions = [...oldActions];
+        newActions[index] = newEvent;
+
+        return newActions;
+      })
 
       yield "next";
     }
   }
 
-  actions.setEvents([
-    ...actions.events,
-    newEvent,
-  ]);
+  actions.setEvents(oldActions => {
+    const newActions = [...oldActions];
+    newActions[index] = newEvent;
+
+    return newActions;
+  })
 
   const numberOfOptions = promptEvent.options.length;
 
@@ -121,6 +150,23 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   yield* runEvents(selectedOption.nextDialog);
 }
 
+export function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
+  let actions = yield "next";
+
+  actions.setEvents([
+    ...actions.events,
+    describeEvent,
+  ]);
+
+  actions = yield "next";
+
+  if (describeEvent.nextDialog) {
+    for (const next of describeEvent.nextDialog) {
+      actions.setEvents([...actions.events, next])
+      actions = yield "next";
+    }
+  }
+}
 export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
   let actions = yield "next";
 
@@ -170,4 +216,8 @@ export function* displayText(): Cinematic {
 
   // yield* runPromptEvent(TestPrompt)
   yield* runChangeLocation(Locations.Bar);
+}
+
+export function* hello(): Cinematic {
+  yield* runEvents(eatChicken);
 }

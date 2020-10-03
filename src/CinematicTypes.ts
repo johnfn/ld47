@@ -1,6 +1,6 @@
-import { Locations, LocationNames } from "./Data";
+import { LocationNames } from "./Data";
 
-export type DialogEvent = SpeakEvent | PromptEvent | ActionEvent;
+export type DialogEvent = SpeakEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundEvent;
 
 export type ActionType =
   | 'Talk'
@@ -22,7 +22,22 @@ export type PromptEvent = {
 export type ActionEvent = {
   text: string;
   type: "action";
+  onClick?: () => void;
 };
+
+export type DescribeEvent = {
+  text: string;
+  nextDialog?: DialogEvent[];
+  type: "describe";
+};
+
+export type BackgroundEvent = {
+  speaker: string;
+  text: string;
+  timeString: string;
+  type: "background-event";
+};
+
 
 export type PromptOption = {
   text: string;
@@ -33,11 +48,17 @@ export type AllLocations = {
   [key in LocationNames]: Location;
 }
 
+export type LiveEvent = {
+  time: string;
+  text: string[];
+}
+
 export type Location = {
   description: string[];
   people: string[];
   exits: LocationNames[];
   actions: ActionType[];
+  liveEvents: LiveEvent[];
 }
 
 export const PromptSelectionKeys = ["A", "S", "D", "F", "Z", "X", "C", "V"] as const;

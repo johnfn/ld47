@@ -35,15 +35,12 @@ export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
           return <div style={childStyle}>You've reached a dead end.</div>
         }
 
-        if (runCinematic.type === "can-run-cinematic") {
-          return (<div style={containerStyle}>
-            {location.exits.map((p) => {
-              return <button onClick={() => { runCinematic.runCinematic(runChangeLocation(Locations[p])) }} style={childStyle}>{p}</button>
-            })}
-          </div>
-          );
-
-        }
+        return (<div style={containerStyle}>
+          {location.exits.map((p) => {
+            return <button onClick={() => { runCinematic.runCinematic(runChangeLocation(Locations[p])) }} style={childStyle}>{p}</button>
+          })}
+        </div>
+        );
       }
       case "Inventory": {
         // todo: hook up to state
@@ -103,22 +100,12 @@ export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
       border: '1px solid black'
     }}>
       {location.actions.map((a, i) => {
-        if (runCinematic.type === "already-running-cinematic") {
-          return (
-            <button
-              disabled={true}
-              onClick={() => { onClickMenuItem(i) }}>
-              {a.toUpperCase()}
-            </button>
-          );
-        } else {
-          return (
-            <button
-              onClick={() => { onClickMenuItem(i) }}>
-              {a.toUpperCase()}
-            </button>
-          );
-        }
+        return (
+          <button
+            onClick={() => { onClickMenuItem(i) }}>
+            {a.toUpperCase()}
+          </button>
+        );
       })}
     </div>
     {openMenu !== null ? renderOptions(openMenu) : <span></span>}

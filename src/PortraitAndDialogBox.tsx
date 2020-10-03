@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActionEvent, DialogEvent, PromptEvent, PromptSelectionKeys, SpeakEvent } from './CinematicTypes';
 import { Dialog } from './Dialog'
-import { Action } from './PlayerActions';
+import { Action, Describe } from './PlayerActions';
 import Portrait from './images/portrait2.png';
 import { PlayerActions } from './PlayerActions';
 import { Location } from './CinematicTypes';
@@ -100,7 +100,11 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
               }
               else if (event.type === "action") {
                 result = <Action event={event} />
-              } else {
+              }
+              else if (event.type === "describe") {
+                result = <Describe event={event} />
+              }
+              else {
                 alert("unhandled event type");
               }
 

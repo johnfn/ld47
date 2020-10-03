@@ -1,17 +1,17 @@
-import { DialogEvent, AllLocations, PromptEvent } from "./CinematicTypes";
+import { DialogEvent, AllLocations, PromptEvent, BackgroundEvent } from "./CinematicTypes";
 
-const eatChicken: DialogEvent[] = [
+export const eatChicken: BackgroundEvent[] = [
   {
-    speaker: "You",
+    speaker: "Joe",
     text: "YES",
-    type: "dialog",
+    type: "background-event",
     timeString: "",
   },
 
   {
     speaker: "You",
     text: "I will no longer be hungry",
-    type: "dialog",
+    type: "background-event",
     timeString: "",
   },
 ]
@@ -66,6 +66,12 @@ export const Locations: AllLocations = {
       'Outdoors',
       'Secret Passageway',
     ],
+    liveEvents: [
+      {
+        text: ["Joe stumbles in the bar"],
+        time: "11:02 AM",
+      }
+    ],
     actions: ['Explore', 'Inventory', 'Talk'],
   },
 
@@ -76,6 +82,12 @@ export const Locations: AllLocations = {
     ],
     people: [],
     exits: ["Bar"],
+    liveEvents: [
+      {
+        text: ["You see Joe walk into the Royal Skillet."],
+        time: "11:02 AM",
+      }
+    ],
     actions: ['Explore', 'Inventory', 'Talk'],
   },
 
@@ -86,6 +98,13 @@ export const Locations: AllLocations = {
     ],
     people: [],
     exits: ["Bar"],
+    liveEvents: [
+      {
+        text: ["You see Joe walking down the secret passageway."],
+        time: "11:01 AM",
+      }
+
+    ],
     actions: ['Explore', 'Inventory', 'Talk'],
   }
 };

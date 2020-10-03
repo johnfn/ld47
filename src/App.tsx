@@ -4,17 +4,14 @@ import Background from './images/img_placeholder.png';
 import { Clock, useClock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
-import { displayText } from './Cinematics';
+import { displayText, hello } from './Cinematics';
 import { Keyboard } from './Keyboard';
 import { DialogEvent, Cinematic, Location } from './CinematicTypes';
 import { Locations } from './Data';
 
 export type CinematicState = {
-  type: 'can-run-cinematic';
   runCinematic: (cinematic: Cinematic) => void;
-} | {
-  type: 'already-running-cinematic';
-  cinematic: Cinematic;
+  cinematics: Cinematic[];
 }
 
 const App = () => {
@@ -26,20 +23,22 @@ const App = () => {
   const { dateString, timeString } = useClock();
 
   const [cinematicState, setCinematicState] = React.useState<CinematicState>({
-    type: 'can-run-cinematic',
+    cinematics: [],
     runCinematic: null as any, // circular dependency makes this tricky
   });
 
   const runCinematic = useCallback((cinematic: Cinematic) => {
     setCinematicState({
-      type: "already-running-cinematic",
-      cinematic,
+      cinematics: [...cinematicState.cinematics, cinematic],
+      runCinematic,
     });
-  }, [cinematicState.type]);
+  }, [cinematicState.cinematics.length]);
+
+  const [test, setTest] = React.useState(false);
 
   useEffect(() => {
     setCinematicState({
-      type: 'can-run-cinematic',
+      cinematics: [],
       runCinematic: runCinematic,
     });
 
@@ -51,8 +50,8 @@ const App = () => {
   useInterval(() => {
     Keyboard.update();
 
-    if (cinematicState.type === "already-running-cinematic") {
-      const result = cinematicState.cinematic.next({
+    const newCinematics = cinematicState.cinematics.map(cinematic => {
+      const result = cinematic.next({
         setEvents: setEvents,
         events: events,
         showDialogLineFinishedMessage: dialogLineFinished,
@@ -66,11 +65,21 @@ const App = () => {
       });
 
       if (result.done) {
-        setCinematicState({
-          type: 'can-run-cinematic',
-          runCinematic: runCinematic,
-        });
+        return null;
       }
+
+      return cinematic;
+    }).filter((x): x is Cinematic => x !== null);
+
+
+    setCinematicState({
+      cinematics: newCinematics,
+      runCinematic,
+    });
+
+    if (!test && timeString.toLowerCase() === "11:01 am") {
+      runCinematic(hello());
+      setTest(true);
     }
   }, 20);
 
