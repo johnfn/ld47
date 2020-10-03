@@ -1,7 +1,11 @@
 import React from 'react';
 import { ActionEvent, DialogEvent, PromptEvent, PromptSelectionKeys, SpeakEvent } from './CinematicTypes';
 import { Dialog } from './Dialog'
+import { Action } from './PlayerActions';
 import Portrait from './images/portrait2.png';
+import { PlayerActions } from './PlayerActions';
+import { Location } from './CinematicTypes';
+import { CinematicState } from './App';
 
 const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
   return (
@@ -23,20 +27,13 @@ const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
   )
 };
 
-const Action: React.FC<{ action: ActionEvent }> = ({ action }) => {
-  return (
-    <div>
-      {action.options.map((option) => <div>{option.text}</div>)
 
-      }
-    </div>
-  )
-};
-
-export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinished }: {
+export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinished, location, cinematicState }: {
   events: DialogEvent[];
   dialogLineFinished: boolean;
   promptFinished: boolean;
+  location: Location;
+  cinematicState: CinematicState
 }) => {
   const speakingEvents: SpeakEvent[] = [];
   const promptEvents: PromptEvent[] = [];
@@ -48,6 +45,8 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
       promptEvents.push(event);
     }
   }
+
+  let lastTimeString: string | null = null;
 
   return (
     <div style={{ display: 'flex', flex: '0 0 400px' }}>
@@ -68,19 +67,44 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
         padding: 20,
         width: 220,
         backgroundColor: "white",
-        border: '1px solid black'
+        border: '1px solid black',
       }}>
-        <div>
+        <div style={{
+          overflow: 'auto',
+        }}>
           {
             events.map(event => {
+              let result: React.ReactNode;
+
               if (event.type === "dialog") {
-                return <Dialog event={event} />
+                let showTimestamp = false;
+                if (lastTimeString === null) {
+                  showTimestamp = true;
+                } else {
+                  const prevTime = (lastTimeString.split(" ")[0]).split(":").map(x => Number(x));
+                  const nowTime = (event.timeString.split(" ")[0]).split(":").map(x => Number(x));
+
+                  const prevTimeMinutes = prevTime[0] * 60 + prevTime[1];
+                  const nowTimeMinutes = nowTime[0] * 60 + nowTime[1];
+
+                  if (nowTimeMinutes - prevTimeMinutes > 10) {
+                    showTimestamp = true;
+                  }
+                }
+
+                result = <Dialog event={event} showTimestamp={showTimestamp} />
+
+                lastTimeString = event.timeString;
               } else if (event.type === "prompt") {
-                return <Prompt prompt={event} />;
+                result = <Prompt prompt={event} />;
+              }
+              else if (event.type === "action") {
+                result = <Action event={event} />
+              } else {
+                alert("unhandled event type");
               }
 
-              alert("unhandled event type")
-              return null;
+              return result;
             })
           }
 
@@ -88,7 +112,7 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
             dialogLineFinished &&
             <div style={{ color: 'lightgray', paddingTop: '20px' }}>
               Space to continue
-        </div>
+            </div>
           }
 
           {
@@ -98,7 +122,8 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
             </div>
           }
         </div>
-        <div style={{ margin: " 0 auto" }}>inventory | map | talk</div>
+
+        <PlayerActions cinematicState={cinematicState} location={location} />
       </div>
     </div >);
 }

@@ -1,6 +1,6 @@
 import { Locations, LocationNames } from "./Data";
 
-export type DialogEvent = SpeakEvent | PromptEvent;
+export type DialogEvent = SpeakEvent | PromptEvent | ActionEvent;
 
 export type ActionType =
   | 'Talk'
@@ -10,6 +10,7 @@ export type ActionType =
 export type SpeakEvent = {
   speaker: string;
   text: string;
+  timeString: string;
   type: "dialog"
 }
 
@@ -19,7 +20,7 @@ export type PromptEvent = {
 }
 
 export type ActionEvent = {
-  options: PromptOption[];
+  text: string;
   type: "action";
 };
 
@@ -44,6 +45,8 @@ export const PromptSelectionKeys = ["A", "S", "D", "F", "Z", "X", "C", "V"] as c
 export type CinematicArgs = {
   setEvents: React.Dispatch<React.SetStateAction<DialogEvent[]>>;
   events: DialogEvent[];
+  dateString: string;
+  timeString: string;
 
   setShowDialogLineFinishedMessage: React.Dispatch<React.SetStateAction<boolean>>;
   showDialogLineFinishedMessage: boolean;

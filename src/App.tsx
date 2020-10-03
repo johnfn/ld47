@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect } from 'react';
 import useInterval from './ use_interval';
 import Background from './images/img_placeholder.png';
-import { Clock } from './Clock';
+import { Clock, useClock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
 import { displayText } from './Cinematics';
 import { Keyboard } from './Keyboard';
 import { DialogEvent, Cinematic, Location } from './CinematicTypes';
 import { Locations } from './Data';
-import { useWhyDidYouUpdate } from './WhyDidYouUpdate';
 
 export type CinematicState = {
   type: 'can-run-cinematic';
@@ -24,6 +23,7 @@ const App = () => {
   const [dialogLineFinished, setDialogLineFinished] = React.useState(false);
   const [showPromptFinishedMessage, setShowPromptFinishedMessage] = React.useState(false);
   const [activeLocation, setActiveLocation] = React.useState<Location>(Locations.Bar);
+  const { dateString, timeString } = useClock();
 
   const [cinematicState, setCinematicState] = React.useState<CinematicState>({
     type: 'can-run-cinematic',
@@ -61,6 +61,8 @@ const App = () => {
         setShowPromptFinishedMessage,
         activeLocation,
         setActiveLocation,
+        dateString,
+        timeString,
       });
 
       if (result.done) {
@@ -86,15 +88,16 @@ const App = () => {
         backgroundSize: '100%',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', }}>
-          <Clock />
+          <Clock dateString={dateString} timeString={timeString} />
           <PortraitAndActions cinematicState={cinematicState} location={activeLocation} />
         </div>
 
         <PortraitAndDialogBox
           events={events}
           dialogLineFinished={dialogLineFinished}
+          location={activeLocation}
           promptFinished={showPromptFinishedMessage}
-        />
+          cinematicState={cinematicState} />
       </div>
     </div>
   );

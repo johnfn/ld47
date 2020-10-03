@@ -5,12 +5,14 @@ const eatChicken: DialogEvent[] = [
     speaker: "You",
     text: "YES",
     type: "dialog",
+    timeString: "",
   },
 
   {
     speaker: "You",
     text: "I will no longer be hungry",
     type: "dialog",
+    timeString: "",
   },
 ]
 
@@ -19,12 +21,14 @@ const dontEatChicken: DialogEvent[] = [
     speaker: "You",
     text: "NO",
     type: "dialog",
+    timeString: "",
   },
 
   {
     speaker: "You",
     text: "This is terrible!",
     type: "dialog",
+    timeString: "",
   },
 ]
 

@@ -16,9 +16,10 @@ const months: { [key: number]: string } = {
   11: "December"
 }
 
-export const Clock = (props: {}) => {
+export const useClock = (): { dateString: string, timeString: string } => {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-  const [currentDate, setCurrentDate] = React.useState(new Date(Date.parse('14 April 2012 10:10:14 PST')));
+
+  const [currentDate, setCurrentDate] = React.useState(new Date(Date.parse('14 April 2012 10:00:00 PST')));
   const [timeString, setTimeString] = React.useState("");
   const [dateString, setDateString] = React.useState("");
 
@@ -31,6 +32,16 @@ export const Clock = (props: {}) => {
     setDateString(`${currentDate.toLocaleDateString("en-US", options).split(",")[1]}`);
   }, 50);
 
+  return {
+    timeString,
+    dateString,
+  };
+};
+
+export const Clock = ({ dateString, timeString }: {
+  timeString: string;
+  dateString: string;
+}) => {
   return (<div style={{ width: 150 }}>
     <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>{timeString}</div>
     <div style={{ backgroundColor: "white", border: '1px solid black', alignSelf: "flex-end", width: 80 }}>{dateString}</div>

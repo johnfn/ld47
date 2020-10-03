@@ -1,12 +1,13 @@
-import { SpeakEvent, Cinematic, DialogEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location } from "./CinematicTypes";
-import { Locations, TestPrompt } from "./Data";
+import { SpeakEvent, Cinematic, DialogEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent } from "./CinematicTypes";
+import { Locations } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
 export function* runSpeakEvent(event: SpeakEvent): Cinematic {
   let actions = yield "next";
+  const timeString = actions.timeString;
 
   const { speaker, text } = event;
-  const dialogResult: SpeakEvent = { speaker, text: "", type: "dialog" };
+  const dialogResult: SpeakEvent = { speaker, text: "", type: "dialog", timeString: timeString };
   const startingDialog = actions.events;
 
   for (const character of text) {
@@ -17,7 +18,7 @@ export function* runSpeakEvent(event: SpeakEvent): Cinematic {
       break;
     }
 
-    yield "next";
+    actions = yield "next";
   }
 
   actions.setEvents([
@@ -26,6 +27,7 @@ export function* runSpeakEvent(event: SpeakEvent): Cinematic {
       speaker,
       text,
       type: "dialog",
+      timeString: timeString,
     },
   ]);
 
@@ -65,6 +67,8 @@ export function* runEvents(events: DialogEvent[]): Cinematic {
       yield* runSpeakEvent(event);
     } else if (event.type === "prompt") {
       yield* runPromptEvent(event)
+    } else if (event.type === "action") {
+      yield* runActionEvent(event)
     }
   }
 }
@@ -117,6 +121,15 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   yield* runEvents(selectedOption.nextDialog);
 }
 
+export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
+  let actions = yield "next";
+
+  actions.setEvents([
+    ...actions.events,
+    actionEvent,
+  ]);
+}
+
 export function* runChangeLocation(location: Location): Cinematic {
   const actions = yield "next";
 
@@ -127,6 +140,7 @@ export function* runChangeLocation(location: Location): Cinematic {
       speaker: "Narrator",
       text,
       type: "dialog",
+      timeString: actions.timeString,
     })
   }
 }
