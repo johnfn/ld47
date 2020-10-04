@@ -28,10 +28,8 @@ const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
 };
 
 
-export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFinished, promptFinished, location, cinematicState, inventory }: {
+export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, cinematicState, inventory }: {
   events: DisplayedEvent[];
-  dialogLineFinished: boolean;
-  promptFinished: boolean;
   location: Location;
   cinematicState: CinematicState;
   markActionAsTaken: (id: string) => void;
@@ -56,6 +54,25 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFini
   }
 
   let lastTimeString: string | null = null;
+
+  let isDialogLineFinished: boolean | null = null;
+  let isPromptFinished: boolean | null = null;
+
+  for (const event of events.slice().reverse()) {
+    if (event.type === "background-dialog") {
+      continue;
+    }
+
+    if (event.type === "dialog") {
+      isDialogLineFinished = event.isThisFinished && !event.isContainingSequenceFinished;
+    }
+
+    if (event.type === "prompt") {
+      isPromptFinished = event.isThisFinished && !event.isContainingSequenceFinished;
+    }
+
+    break;
+  }
 
   return (
     <div style={{ display: 'flex', flex: '0 0 400px' }}>
@@ -125,14 +142,14 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFini
             })
           }
           {
-            dialogLineFinished &&
+            isDialogLineFinished &&
             <div style={{ color: 'lightgray', paddingTop: '20px' }}>
               Space to continue
             </div>
           }
 
           {
-            promptFinished &&
+            isPromptFinished &&
             <div style={{ color: 'lightgray', paddingTop: '20px' }}>
               Choose an action to continue
             </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CinematicState, DisplayedAction, DisplayedDescribe, DisplayedEvent, Inventory, InventoryItem } from './App';
-import { runChangeLocation, runDescribeEvent, runEvents } from './Cinematics';
+import { runEvents } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location } from './CinematicTypes';
 import { LocationNames, Locations } from './Data';
 import { Keys } from './Utils';
@@ -85,7 +85,10 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
               onClick: () => {
                 // TODO- we can allow for interruptions now, so this check is pretty unnecessary... but eh
                 if (cinematicState.cinematics.length === 0 && canChangeLocations(location, exit)) {
-                  cinematicState.runCinematic(runChangeLocation(Locations[exit]))
+                  cinematicState.runCinematic(runEvents([{
+                    type: "change-location",
+                    newLocation: Locations[exit],
+                  }]));
                 }
               }
             })
@@ -100,7 +103,7 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
         let items = [];
         for (const item of Keys(inventory)) {
           if (inventory[item] === true) {
-            items.push(inventory[item]);
+            items.push(item);
           }
         }
         if (items.length === 0) {
@@ -136,11 +139,8 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
     }
 
     const event: DescribeEvent = { type: "describe", text: actionText, nextDialog };
-    console.log(event);
 
-    if (cinematicState.cinematics.length === 0) {
-      cinematicState.runCinematic(runDescribeEvent(event));
-    }
+    cinematicState.runCinematic(runEvents([event]));
   }, [cinematicState.cinematics.length, location.name]);
 
   // TODO: This (setting width:160) is a hacky way of aligning divs pixel-perfectly,
@@ -162,7 +162,7 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
                 continue;
               }
 
-              if (event.isFinished) {
+              if (event.isContainingSequenceFinished) {
                 disabled = false;
                 break;
               }

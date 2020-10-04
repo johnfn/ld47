@@ -14,15 +14,16 @@ export type CinematicState = {
   cinematics: Cinematic[];
 }
 
-export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isFinished: boolean; }
-export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isFinished: boolean; };
-export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; isFinished: boolean; };
-export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isFinished: boolean; };
+export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; }
+export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; };
+export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; };
+export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; };
 export type DisplayedAction = {
   type: "action";
   options: { text: string; onClick?: () => void; }[]; id: string;
   hasTakenAction: boolean;
-  isFinished: boolean;
+  isContainingSequenceFinished: boolean;
+  isThisFinished: boolean;
 };
 
 export type InventoryItem = "key" | "book";
@@ -41,8 +42,6 @@ const App = () => {
 
   const [inventory, setInventory] = React.useState<Inventory>({ key: false, book: false })
 
-  const [dialogLineFinished, setDialogLineFinished] = React.useState(false);
-  const [showPromptFinishedMessage, setShowPromptFinishedMessage] = React.useState(false);
   const [activeLocation, setActiveLocation] = React.useState<Location>(Locations.Bar);
   const { dateString, timeString } = useClock();
 
@@ -78,10 +77,6 @@ const App = () => {
       const result = cinematic.next({
         setEvents: setEvents,
         events: events,
-        showDialogLineFinishedMessage: dialogLineFinished,
-        setShowDialogLineFinishedMessage: setDialogLineFinished,
-        showPromptFinishedMessage,
-        setShowPromptFinishedMessage,
         activeLocation,
         setActiveLocation,
         dateString,
@@ -94,7 +89,7 @@ const App = () => {
         setEvents(events => {
           const newEvents = [...events];
 
-          newEvents[newEvents.length - 1].isFinished = true;
+          newEvents[newEvents.length - 1].isContainingSequenceFinished = true;
           return newEvents;
         })
         return null;
@@ -102,7 +97,6 @@ const App = () => {
 
       return cinematic;
     }).filter((x): x is Cinematic => x !== null);
-
 
     setCinematicState({
       cinematics: newCinematics,
@@ -144,9 +138,7 @@ const App = () => {
         <PortraitAndDialogBox
           inventory={inventory}
           events={events}
-          dialogLineFinished={dialogLineFinished}
           location={activeLocation}
-          promptFinished={showPromptFinishedMessage}
           cinematicState={cinematicState}
           markActionAsTaken={(id) => {
             setEvents(prevEvents => {

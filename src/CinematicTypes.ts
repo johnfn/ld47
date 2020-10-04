@@ -1,7 +1,7 @@
 import { DisplayedEvent, Inventory } from "./App";
 import { LocationNames as LocationName } from "./Data";
 
-export type CinematicEvent = DialogEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundDialog | InventoryEvent;
+export type CinematicEvent = DialogEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundDialog | InventoryEvent | ChangeLocationEvent;
 
 export type ActionType =
   | 'Talk'
@@ -42,6 +42,10 @@ export type InventoryEvent = {
   item: keyof Inventory;
 }
 
+export type ChangeLocationEvent = {
+  type: "change-location";
+  newLocation: Location;
+}
 
 export type PromptOption = {
   text: string;
@@ -77,12 +81,6 @@ export type CinematicArgs = {
 
   dateString: string;
   timeString: string;
-
-  setShowDialogLineFinishedMessage: React.Dispatch<React.SetStateAction<boolean>>;
-  showDialogLineFinishedMessage: boolean;
-
-  setShowPromptFinishedMessage: React.Dispatch<React.SetStateAction<boolean>>;
-  showPromptFinishedMessage: boolean;
 
   setActiveLocation: React.Dispatch<React.SetStateAction<Location>>;
   activeLocation: Location;

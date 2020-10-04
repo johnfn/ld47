@@ -1,9 +1,9 @@
 import React from 'react';
 import Portrait from './images/portrait.png';
 import { Location } from './CinematicTypes';
-import { runChangeLocation } from './Cinematics';
 import { Locations } from './Data';
 import { CinematicState } from './App';
+import { runEvents } from './Cinematics';
 
 export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
   location: Location;
@@ -37,7 +37,14 @@ export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
 
         return (<div style={containerStyle}>
           {location.exits.map((p) => {
-            return <button onClick={() => { runCinematic.runCinematic(runChangeLocation(Locations[p])) }} style={childStyle}>{p}</button>
+            return <button onClick={() => {
+              runCinematic.runCinematic(runEvents([{
+                type: "change-location",
+                newLocation: Locations[p],
+              }
+              ]
+              ))
+            }} style={childStyle}>{p}</button>
           })}
         </div>
         );

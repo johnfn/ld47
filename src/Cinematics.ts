@@ -1,5 +1,6 @@
+import { textChangeRangeIsUnchanged } from "typescript";
 import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
-import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent } from "./CinematicTypes";
+import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent } from "./CinematicTypes";
 import { eatChicken, Locations } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
@@ -22,14 +23,14 @@ const generateId = () => {
 // NARRATOR        10:03 PM
 //   how are you.  
 
-export function* runSpeakEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean } = {}): Cinematic {
-  const background = props?.background;
+function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean, isLastEvent: boolean }): Cinematic {
+  const { background, isLastEvent } = props;
   let actions = yield "next";
   const timeString = actions.timeString;
 
   const { speaker, text } = event;
   const id = generateId();
-  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id, isFinished: false };
+  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, isThisFinished: false };
 
   actions.setEvents(oldEvents => {
     return [...oldEvents, dialogResult];
@@ -53,6 +54,7 @@ export function* runSpeakEvent(event: DialogEvent | BackgroundDialogEvent, props
   }
 
   dialogResult.text = text;
+  dialogResult.isThisFinished = true;
 
   actions.setEvents(oldEvents => {
     const newEvents = [...oldEvents];
@@ -63,10 +65,11 @@ export function* runSpeakEvent(event: DialogEvent | BackgroundDialogEvent, props
     return newEvents;
   });
 
-  if (!background) {
-    actions.setShowDialogLineFinishedMessage(true);
+  debugger;
+  console.log('is last event?', isLastEvent);
+
+  if (!background && !isLastEvent) {
     yield* waitForKey("Spacebar");
-    actions.setShowDialogLineFinishedMessage(false);
   }
 }
 
@@ -95,24 +98,29 @@ export function* waitForKeys(keys: KeyName[]): Cinematic<KeyName> {
 export function* runEvents(events: CinematicEvent[]): Cinematic {
   let actions = yield "next";
 
-  for (const event of events) {
+  for (let i = 0; i < events.length; i++) {
+    const event = events[i];
+    const isLastEvent = i === events.length - 1;
+
     if (event.type === "dialog") {
-      yield* runSpeakEvent(event);
+      yield* runDialogEvent(event, { isLastEvent });
     } else if (event.type === "prompt") {
-      yield* runPromptEvent(event)
+      yield* runPromptEvent(event, { isLastEvent })
     } else if (event.type === "action") {
-      yield* runActionEvent(event)
+      yield* runActionEvent(event, { isLastEvent })
+    } else if (event.type === "change-location") {
+      yield* runChangeLocation(event, { isLastEvent });
     } else if (event.type === "background-dialog") {
-      yield* runSpeakEvent(event, { background: true })
+      yield* runDialogEvent(event, { background: true, isLastEvent })
     } else if (event.type === "inventory") {
-      yield* addToInventory(event.item);
+      yield* addToInventory(event.item, { isLastEvent });
     } else if (event.type === "describe") {
-      yield* runDescribeEvent(event);
+      yield* runDescribeEvent(event, { isLastEvent });
     }
   }
 }
 
-export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
+function* runPromptEvent(promptEvent: PromptEvent, props: { isLastEvent: boolean }): Cinematic {
   let actions = yield "next";
 
   const id = generateId();
@@ -121,7 +129,8 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
     type: "prompt",
     id,
     time: actions.timeString,
-    isFinished: false,
+    isContainingSequenceFinished: false,
+    isThisFinished: false,
   };
 
   actions.setEvents(oldActions => {
@@ -151,6 +160,8 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
     }
   }
 
+  newEvent.isThisFinished = true;
+
   actions.setEvents(oldActions => {
     const newActions = [...oldActions];
     const indexToUpdate = newActions.findIndex(action => action.id === id);
@@ -161,10 +172,7 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
 
   const numberOfOptions = promptEvent.options.length;
 
-  actions.setShowPromptFinishedMessage(true);
   const selection = yield* waitForKeys(PromptSelectionKeys.slice(0, numberOfOptions));
-  actions.setShowPromptFinishedMessage(false);
-
   const selectedOptionIndex = PromptSelectionKeys.indexOf(selection as any);
   const selectedOption = promptEvent.options[selectedOptionIndex];
 
@@ -175,12 +183,12 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   yield* runEvents(selectedOption.nextDialog);
 }
 
-export function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
+function* runDescribeEvent(describeEvent: DescribeEvent, props: { isLastEvent: boolean }): Cinematic {
   let actions = yield "next";
 
   const timeString = actions.timeString;
   const id = generateId();
-  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id, isFinished: false, };
+  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id, isContainingSequenceFinished: false, isThisFinished: false };
 
   actions.setEvents(oldEvents => {
     return [...oldEvents, newEvent];
@@ -204,6 +212,7 @@ export function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
   }
 
   newEvent.text = describeEvent.text;
+  newEvent.isThisFinished = true;
 
   actions.setEvents(oldEvents => {
     const newEvents = [...oldEvents];
@@ -217,7 +226,8 @@ export function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
     yield* runEvents([describeEvent.nextDialog]);
   }
 }
-export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
+
+function* runActionEvent(actionEvent: ActionEvent, props: { isLastEvent: boolean }): Cinematic {
   let actions = yield "next";
 
   actions.setEvents([
@@ -226,22 +236,27 @@ export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
       ...actionEvent,
       id: generateId(),
       hasTakenAction: false,
-      isFinished: false,
+      isContainingSequenceFinished: false,
+      isThisFinished: true,
     },
   ]);
 }
 
-export function* runChangeLocation(location: Location): Cinematic {
+function* runChangeLocation(event: ChangeLocationEvent, props: { isLastEvent: boolean }): Cinematic {
+  const { isLastEvent } = props;
   const actions = yield "next";
 
-  actions.setActiveLocation(location);
+  actions.setActiveLocation(event.newLocation);
 
-  for (const text of location.description) {
-    yield* runSpeakEvent({
+  for (let i = 0; i < event.newLocation.description.length; i++) {
+    const text = event.newLocation.description[i];
+    const isLast = i === event.newLocation.description.length - 1;
+
+    yield* runDialogEvent({
       speaker: "Narrator",
       text,
       type: "dialog",
-    })
+    }, { isLastEvent: isLastEvent && isLast });
   }
 }
 
@@ -269,17 +284,18 @@ export function* displayText(): Cinematic {
   // ]);
 
   // yield* runPromptEvent(TestPrompt)
-  yield* runChangeLocation(Locations.Bar);
+  yield* runChangeLocation({ newLocation: Locations.Bar, type: "change-location" }, { isLastEvent: true });
 }
 
-export function* addToInventory(item: keyof Inventory): Cinematic {
+function* addToInventory(item: keyof Inventory, props: { isLastEvent: boolean }): Cinematic {
   let actions = yield "next";
 
   actions.setInventory({ ...actions.inventory, [item]: true })
 
   const titledCasedItem = item.charAt(0).toUpperCase() + item.slice(1)
   const getEvent: DialogEvent = { type: "dialog", speaker: "narrator", text: `${titledCasedItem} was added to your inventory.` }
-  yield* runSpeakEvent(getEvent);
+
+  yield* runDialogEvent(getEvent, { isLastEvent: true });
 }
 
 export function* hello(): Cinematic {
