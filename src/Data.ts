@@ -1,4 +1,4 @@
-import { talk, prompt, setLocation, narrate } from "./Cinematics";
+import { talk, prompt, setLocation, narrate, giveItem } from "./Cinematics";
 import { CinematicEvent, AllLocations, PromptEvent, BackgroundDialog, DialogEvent, Cinematic } from "./CinematicTypes";
 
 export const eatChicken: BackgroundDialog[] = [
@@ -56,18 +56,11 @@ export const Locations: AllLocations = {
     people: [
       {
         name: 'Bartender',
-        dialog: [
-          { type: 'dialog', speaker: 'Bartender', text: "Hi! I'm the bartender round these parts.", },
-          { type: 'dialog', speaker: 'Bartender', text: "BLah blah blah blah", },
-          { type: 'dialog', speaker: 'Bartender', text: "Blee blee blee blee", },
-          { type: 'dialog', speaker: 'Bartender', text: "Blooooooooooooooooo", },
-        ]
+        dialog: speakToBartender(),
       },
       {
-        name: 'Guy 2', dialog: [
-          { type: 'dialog', speaker: 'Guy 2', text: "Hi! I'm Guy 2. Here is a book." },
-          { type: 'inventory', item: "book" }
-        ]
+        name: 'Guy 2',
+        dialog: speakToGuy2(),
       },
     ],
     exits: [
@@ -156,4 +149,16 @@ function* enterOutside(): Cinematic {
 function* enterSecretPassageway(): Cinematic {
   yield* narrate("Whoa... A secret passageway!");
   yield* narrate("Maybe I'll find Team Rocket!");
+}
+
+function* speakToBartender(): Cinematic {
+  yield* talk("Bartender", "I'm a bartender!");
+  yield* talk("Bartender", "L ala la LA LA LA LA LA WHEE BAR TENDING");
+}
+
+function* speakToGuy2(): Cinematic {
+  yield* talk("Bartender", "I'm guy 2");
+  yield* talk("Bartender", "Here, take a book!");
+
+  yield* giveItem("book");
 }

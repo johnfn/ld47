@@ -294,3 +294,7 @@ export function* prompt(options: string[]): Cinematic<number> {
     type: "prompt",
   });
 }
+
+export function* giveItem(item: keyof Inventory): Cinematic {
+  yield* addToInventory(item)
+}

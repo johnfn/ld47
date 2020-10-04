@@ -139,7 +139,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics }: {
           nextDialog = { type: "action", options: [] }
 
           for (const person of location.people) {
-            const dialog = person.dialog;
+            const interaction = person.dialog;
             const text = `> Talk to ${person.name.toLowerCase()}`;
 
             nextDialog.options.push({
@@ -147,7 +147,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics }: {
                 setCinematics(prev => [
                   // NOTE: intentionally clear out array here to stop all existing cinematics
                   {
-                    cinematic: runEvents(dialog),
+                    cinematic: interaction,
                     status: "running",
                   }
                 ]);
