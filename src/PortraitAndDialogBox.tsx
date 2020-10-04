@@ -18,7 +18,7 @@ const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
             </div>
 
             <div style={{ flex: '1 0 0' }}>
-              {option.text}
+              {option}
             </div>
           </div>
         )

@@ -16,7 +16,7 @@ export type DialogEvent = {
 }
 
 export type PromptEvent = {
-  options: PromptOption[];
+  options: string[];
   type: "prompt";
 }
 
@@ -47,11 +47,6 @@ export type ChangeLocationEvent = {
   newLocation: Location;
 }
 
-export type PromptOption = {
-  text: string;
-  nextDialog: CinematicEvent[];
-}
-
 export type AllLocations = {
   [key in LocationName]: Location;
 }
@@ -62,7 +57,7 @@ export type LiveEvent = {
 }
 
 export type Location = {
-  description: string[];
+  description: Cinematic;
   name: LocationName;
   people: { name: string, dialog: CinematicEvent[] }[];
   exits: LocationName[];

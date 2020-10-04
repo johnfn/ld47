@@ -6,8 +6,8 @@ import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
 import { displayText, runEvents } from './Cinematics';
 import { Keyboard } from './Keyboard';
-import { Cinematic, Location, PromptOption } from './CinematicTypes';
-import { Locations } from './Data';
+import { Cinematic, Location } from './CinematicTypes';
+import { Locations, startGame } from './Data';
 
 export type DisplayedEventState =
   | "animating"
@@ -16,7 +16,7 @@ export type DisplayedEventState =
 
 export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; }
 export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
-export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
+export type DisplayedPrompt = { options: string[]; id: string; type: "prompt"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedAction = {
   type: "action";
@@ -53,7 +53,7 @@ const App = () => {
   useEffect(() => {
     setCinematics([
       {
-        cinematic: displayText(),
+        cinematic: startGame(),
         status: "running",
       },
     ])

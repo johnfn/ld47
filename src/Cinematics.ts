@@ -1,5 +1,5 @@
 import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedEvent, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
-import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptOption, PromptSelectionKeys, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent } from "./CinematicTypes";
+import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptSelectionKeys, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent, Location } from "./CinematicTypes";
 import { Locations } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
@@ -48,7 +48,7 @@ function updateEvent(setEvents: (value: React.SetStateAction<DisplayedEvent[]>) 
   });
 }
 
-function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean }): Cinematic {
+function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean } = { background: false }): Cinematic {
   const { background } = props;
   let actions = yield "next";
   const timeString = actions.timeString;
@@ -129,7 +129,7 @@ export function* runEvents(events: CinematicEvent[]): Cinematic {
   }
 }
 
-function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
+function* runPromptEvent(promptEvent: PromptEvent): Cinematic<number> {
   let actions = yield "next";
 
   const id = generateId();
@@ -145,15 +145,12 @@ function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   addEvent(actions.setEvents, newEvent);
 
   for (const option of promptEvent.options) {
-    const newOption: PromptOption = {
-      nextDialog: option.nextDialog,
-      text: "",
-    };
+    let newOption = "";
 
     newEvent.options.push(newOption);
 
-    for (const character of option.text) {
-      newOption.text += character;
+    for (const character of option) {
+      newEvent.options[newEvent.options.length - 1] += character;
 
       updateEvent(actions.setEvents, newEvent);
 
@@ -168,7 +165,6 @@ function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
 
   const selection = yield* waitForKeys(PromptSelectionKeys.slice(0, numberOfOptions));
   const selectedOptionIndex = PromptSelectionKeys.indexOf(selection as any);
-  const selectedOption = promptEvent.options[selectedOptionIndex];
 
   if (selectedOptionIndex === -1) { alert("AAAAAAA"); }
 
@@ -177,7 +173,7 @@ function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   newEvent.state = "done";
   updateEvent(actions.setEvents, newEvent);
 
-  yield* runEvents(selectedOption.nextDialog);
+  return selectedOptionIndex;
 }
 
 function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
@@ -230,16 +226,7 @@ function* runChangeLocation(event: ChangeLocationEvent): Cinematic {
 
   actions.setActiveLocation(event.newLocation);
 
-  for (let i = 0; i < event.newLocation.description.length; i++) {
-    const text = event.newLocation.description[i];
-    const isLast = i === event.newLocation.description.length - 1;
-
-    yield* runDialogEvent({
-      speaker: "Narrator",
-      text,
-      type: "dialog",
-    }, { background: false });
-  }
+  yield* event.newLocation.description;
 }
 
 export function* displayText(): Cinematic {
@@ -278,4 +265,32 @@ function* addToInventory(item: keyof Inventory): Cinematic {
   const getEvent: DialogEvent = { type: "dialog", speaker: "narrator", text: `${titledCasedItem} was added to your inventory.` }
 
   yield* runDialogEvent(getEvent, { background: false });
+}
+
+// exported
+
+export function* talk(speaker: string, text: string): Cinematic {
+  yield* runDialogEvent({
+    speaker, text, type: "dialog"
+  })
+}
+
+export function* narrate(text: string): Cinematic {
+  yield* runDialogEvent({
+    speaker: "narrator", text, type: "dialog"
+  })
+}
+
+export function* setLocation(newLocation: Location): Cinematic {
+  yield* runChangeLocation({
+    newLocation,
+    type: "change-location",
+  });
+}
+
+export function* prompt(options: string[]): Cinematic<number> {
+  return yield* runPromptEvent({
+    options,
+    type: "prompt",
+  });
 }
