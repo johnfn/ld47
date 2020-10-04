@@ -1,7 +1,6 @@
-import { textChangeRangeIsUnchanged } from "typescript";
-import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
-import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent } from "./CinematicTypes";
-import { eatChicken, Locations } from "./Data";
+import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedEvent, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
+import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptOption, PromptSelectionKeys, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent } from "./CinematicTypes";
+import { Locations } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
 let lastUsedId = 0;
@@ -23,28 +22,46 @@ const generateId = () => {
 // NARRATOR        10:03 PM
 //   how are you.  
 
-function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean, isLastEvent: boolean }): Cinematic {
-  const { background, isLastEvent } = props;
+function addEvent(setEvents: (value: React.SetStateAction<DisplayedEvent[]>) => void, newEvent: DisplayedEvent) {
+  setEvents(oldEvents => {
+    if (oldEvents.find(ev => ev.id === newEvent.id)) {
+      debugger;
+      alert("Event already added")
+    }
+
+    return [...oldEvents, newEvent];
+  });
+}
+
+function updateEvent(setEvents: (value: React.SetStateAction<DisplayedEvent[]>) => void, updatedEvent: DisplayedEvent) {
+  setEvents(oldEvents => {
+    const newEvents = [...oldEvents];
+    const indexToUpdate = newEvents.findIndex(ev => ev.id === updatedEvent.id);
+
+    if (indexToUpdate === -1) {
+      debugger;
+      alert("Event not in list")
+    }
+
+    newEvents[indexToUpdate] = updatedEvent;
+    return newEvents;
+  });
+}
+
+function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean }): Cinematic {
+  const { background } = props;
   let actions = yield "next";
   const timeString = actions.timeString;
 
   const { speaker, text } = event;
   const id = generateId();
-  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, isThisFinished: false };
+  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating" };
 
-  actions.setEvents(oldEvents => {
-    return [...oldEvents, dialogResult];
-  });
+  addEvent(actions.setEvents, dialogResult);
 
   for (const character of text) {
     dialogResult.text += character;
-    actions.setEvents(oldEvents => {
-      const newEvents = [...oldEvents];
-      const indexToUpdate = newEvents.findIndex(ev => ev.id === id);
-
-      newEvents[indexToUpdate] = dialogResult;
-      return newEvents;
-    });
+    updateEvent(actions.setEvents, dialogResult);
 
     if (Keyboard.justDown.Spacebar) {
       break;
@@ -54,23 +71,16 @@ function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { ba
   }
 
   dialogResult.text = text;
-  dialogResult.isThisFinished = true;
+  dialogResult.state = "waiting-for-key";
 
-  actions.setEvents(oldEvents => {
-    const newEvents = [...oldEvents];
-    const indexToUpdate = newEvents.findIndex(ev => ev.id === id);
+  updateEvent(actions.setEvents, dialogResult);
 
-    newEvents[indexToUpdate] = dialogResult;
-
-    return newEvents;
-  });
-
-  debugger;
-  console.log('is last event?', isLastEvent);
-
-  if (!background && !isLastEvent) {
+  if (!background) {
     yield* waitForKey("Spacebar");
   }
+
+  dialogResult.state = "done";
+  updateEvent(actions.setEvents, dialogResult);
 }
 
 export function* waitForKey(key: KeyName): Cinematic {
@@ -100,27 +110,26 @@ export function* runEvents(events: CinematicEvent[]): Cinematic {
 
   for (let i = 0; i < events.length; i++) {
     const event = events[i];
-    const isLastEvent = i === events.length - 1;
 
     if (event.type === "dialog") {
-      yield* runDialogEvent(event, { isLastEvent });
+      yield* runDialogEvent(event, { background: false });
     } else if (event.type === "prompt") {
-      yield* runPromptEvent(event, { isLastEvent })
+      yield* runPromptEvent(event);
     } else if (event.type === "action") {
-      yield* runActionEvent(event, { isLastEvent })
+      yield* runActionEvent(event);
     } else if (event.type === "change-location") {
-      yield* runChangeLocation(event, { isLastEvent });
+      yield* runChangeLocation(event);
     } else if (event.type === "background-dialog") {
-      yield* runDialogEvent(event, { background: true, isLastEvent })
+      yield* runDialogEvent(event, { background: true })
     } else if (event.type === "inventory") {
-      yield* addToInventory(event.item, { isLastEvent });
+      yield* addToInventory(event.item);
     } else if (event.type === "describe") {
-      yield* runDescribeEvent(event, { isLastEvent });
+      yield* runDescribeEvent(event);
     }
   }
 }
 
-function* runPromptEvent(promptEvent: PromptEvent, props: { isLastEvent: boolean }): Cinematic {
+function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   let actions = yield "next";
 
   const id = generateId();
@@ -130,12 +139,10 @@ function* runPromptEvent(promptEvent: PromptEvent, props: { isLastEvent: boolean
     id,
     time: actions.timeString,
     isContainingSequenceFinished: false,
-    isThisFinished: false,
+    state: "animating",
   };
 
-  actions.setEvents(oldActions => {
-    return [...oldActions, newEvent];
-  });
+  addEvent(actions.setEvents, newEvent);
 
   for (const option of promptEvent.options) {
     const newOption: PromptOption = {
@@ -148,27 +155,14 @@ function* runPromptEvent(promptEvent: PromptEvent, props: { isLastEvent: boolean
     for (const character of option.text) {
       newOption.text += character;
 
-      actions.setEvents(oldActions => {
-        const newActions = [...oldActions];
-        const indexToUpdate = newActions.findIndex(action => action.id === id);
-        newActions[indexToUpdate] = newEvent;
-
-        return newActions;
-      })
+      updateEvent(actions.setEvents, newEvent);
 
       yield "next";
     }
   }
 
-  newEvent.isThisFinished = true;
-
-  actions.setEvents(oldActions => {
-    const newActions = [...oldActions];
-    const indexToUpdate = newActions.findIndex(action => action.id === id);
-    newActions[indexToUpdate] = newEvent;
-
-    return newActions;
-  })
+  newEvent.state = "waiting-for-key";
+  updateEvent(actions.setEvents, newEvent);
 
   const numberOfOptions = promptEvent.options.length;
 
@@ -180,29 +174,24 @@ function* runPromptEvent(promptEvent: PromptEvent, props: { isLastEvent: boolean
 
   // TODO: Update prompt visually to indicate you have selected this one. 
 
+  newEvent.state = "done";
+  updateEvent(actions.setEvents, newEvent);
+
   yield* runEvents(selectedOption.nextDialog);
 }
 
-function* runDescribeEvent(describeEvent: DescribeEvent, props: { isLastEvent: boolean }): Cinematic {
+function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
   let actions = yield "next";
 
   const timeString = actions.timeString;
   const id = generateId();
-  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id, isContainingSequenceFinished: false, isThisFinished: false };
+  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id, isContainingSequenceFinished: false, state: "animating" };
 
-  actions.setEvents(oldEvents => {
-    return [...oldEvents, newEvent];
-  });
+  addEvent(actions.setEvents, newEvent);
 
   for (const character of describeEvent.text) {
     newEvent.text += character;
-    actions.setEvents(oldEvents => {
-      const newEvents = [...oldEvents];
-      const indexToUpdate = newEvents.findIndex(event => event.id === id);
-
-      newEvents[indexToUpdate] = newEvent;
-      return newEvents;
-    });
+    updateEvent(actions.setEvents, newEvent);
 
     if (Keyboard.justDown.Spacebar) {
       break;
@@ -212,22 +201,16 @@ function* runDescribeEvent(describeEvent: DescribeEvent, props: { isLastEvent: b
   }
 
   newEvent.text = describeEvent.text;
-  newEvent.isThisFinished = true;
+  newEvent.state = "done";
 
-  actions.setEvents(oldEvents => {
-    const newEvents = [...oldEvents];
-    const indexToUpdate = newEvents.findIndex(event => event.id === id);
-
-    newEvents[indexToUpdate] = newEvent;
-    return newEvents;
-  });
+  updateEvent(actions.setEvents, newEvent);
 
   if (describeEvent.nextDialog) {
     yield* runEvents([describeEvent.nextDialog]);
   }
 }
 
-function* runActionEvent(actionEvent: ActionEvent, props: { isLastEvent: boolean }): Cinematic {
+function* runActionEvent(actionEvent: ActionEvent): Cinematic {
   let actions = yield "next";
 
   actions.setEvents([
@@ -237,13 +220,12 @@ function* runActionEvent(actionEvent: ActionEvent, props: { isLastEvent: boolean
       id: generateId(),
       hasTakenAction: false,
       isContainingSequenceFinished: false,
-      isThisFinished: true,
+      state: "done",
     },
   ]);
 }
 
-function* runChangeLocation(event: ChangeLocationEvent, props: { isLastEvent: boolean }): Cinematic {
-  const { isLastEvent } = props;
+function* runChangeLocation(event: ChangeLocationEvent): Cinematic {
   const actions = yield "next";
 
   actions.setActiveLocation(event.newLocation);
@@ -256,7 +238,7 @@ function* runChangeLocation(event: ChangeLocationEvent, props: { isLastEvent: bo
       speaker: "Narrator",
       text,
       type: "dialog",
-    }, { isLastEvent: isLastEvent && isLast });
+    }, { background: false });
   }
 }
 
@@ -284,10 +266,10 @@ export function* displayText(): Cinematic {
   // ]);
 
   // yield* runPromptEvent(TestPrompt)
-  yield* runChangeLocation({ newLocation: Locations.Bar, type: "change-location" }, { isLastEvent: true });
+  yield* runChangeLocation({ newLocation: Locations.Bar, type: "change-location" });
 }
 
-function* addToInventory(item: keyof Inventory, props: { isLastEvent: boolean }): Cinematic {
+function* addToInventory(item: keyof Inventory): Cinematic {
   let actions = yield "next";
 
   actions.setInventory({ ...actions.inventory, [item]: true })
@@ -295,9 +277,5 @@ function* addToInventory(item: keyof Inventory, props: { isLastEvent: boolean })
   const titledCasedItem = item.charAt(0).toUpperCase() + item.slice(1)
   const getEvent: DialogEvent = { type: "dialog", speaker: "narrator", text: `${titledCasedItem} was added to your inventory.` }
 
-  yield* runDialogEvent(getEvent, { isLastEvent: true });
-}
-
-export function* hello(): Cinematic {
-  yield* runEvents(eatChicken);
+  yield* runDialogEvent(getEvent, { background: false });
 }

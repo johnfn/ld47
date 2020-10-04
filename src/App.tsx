@@ -9,16 +9,21 @@ import { Keyboard } from './Keyboard';
 import { Cinematic, Location, PromptOption } from './CinematicTypes';
 import { Locations } from './Data';
 
-export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; }
-export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; };
-export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; };
-export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; };
+export type DisplayedEventState =
+  | "animating"
+  | "waiting-for-key"
+  | "done"
+
+export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; }
+export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
+export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
+export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedAction = {
   type: "action";
   options: { text: string; onClick?: () => void; }[]; id: string;
   hasTakenAction: boolean;
   isContainingSequenceFinished: boolean;
-  isThisFinished: boolean;
+  state: DisplayedEventState;
 };
 
 export type InventoryItem = "key" | "book";

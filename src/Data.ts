@@ -76,11 +76,11 @@ export const Locations: AllLocations = {
       'Secret Passageway',
     ],
     liveEvents: [{
-      time: "11:02 AM",
+      time: "11:01 AM",
       event: {
         type: "background-dialog",
         speaker: "Narrator",
-        text: "Charles stumbles in the bar.",
+        text: "Charles stumbles into the bar.",
       }
     }],
     actions: ['Explore', 'Inventory', 'Talk'],

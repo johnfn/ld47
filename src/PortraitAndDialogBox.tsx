@@ -54,8 +54,8 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
 
   let lastTimeString: string | null = null;
 
-  let isDialogLineFinished: boolean | null = null;
-  let isPromptFinished: boolean | null = null;
+  let isDialogWaitingForKey: boolean | null = null;
+  let isPromptWaitingForKey: boolean | null = null;
 
   for (const event of events.slice().reverse()) {
     if (event.type === "background-dialog") {
@@ -63,11 +63,11 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
     }
 
     if (event.type === "dialog") {
-      isDialogLineFinished = event.isThisFinished && !event.isContainingSequenceFinished;
+      isDialogWaitingForKey = event.state === "waiting-for-key";
     }
 
     if (event.type === "prompt") {
-      isPromptFinished = event.isThisFinished && !event.isContainingSequenceFinished;
+      isPromptWaitingForKey = event.state === "waiting-for-key";
     }
 
     break;
@@ -140,15 +140,16 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
               return result;
             })
           }
+
           {
-            isDialogLineFinished &&
+            isDialogWaitingForKey &&
             <div style={{ color: 'lightgray', paddingTop: '20px' }}>
               Space to continue
             </div>
           }
 
           {
-            isPromptFinished &&
+            isPromptWaitingForKey &&
             <div style={{ color: 'lightgray', paddingTop: '20px' }}>
               Choose an action to continue
             </div>

@@ -179,10 +179,6 @@ export const PlayerActions = ({ events, inventory, location, setCinematics }: {
       <div style={{ width: 160 }}>
         {
           location.actions.map((action, i) => {
-
-            // disable if the most recent action (which is not a bg action) is
-            // * a description or
-            // * an event
             let disabled = false;
 
             for (const event of events.slice().reverse()) {
