@@ -1,7 +1,7 @@
 import React from 'react';
 import { ActionEvent, CinematicEvent, PromptEvent, PromptSelectionKeys, DialogEvent } from './CinematicTypes';
 import { Dialog } from './Dialog'
-import { Action, Describe } from './PlayerActions';
+import { Actions, Describe } from './PlayerActions';
 import Portrait from './images/portrait2.png';
 import { PlayerActions } from './PlayerActions';
 import { Location } from './CinematicTypes';
@@ -28,12 +28,13 @@ const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
 };
 
 
-export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinished, location, cinematicState }: {
+export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFinished, promptFinished, location, cinematicState }: {
   events: DisplayedEvent[];
   dialogLineFinished: boolean;
   promptFinished: boolean;
   location: Location;
-  cinematicState: CinematicState
+  cinematicState: CinematicState;
+  markActionAsTaken: (id: string) => void;
 }) => {
   const speakingEvents: DialogEvent[] = [];
   const promptEvents: PromptEvent[] = [];
@@ -71,7 +72,6 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
       }}>
         <div style={{
           overflow: 'auto',
-
         }}>
 
           {
@@ -80,6 +80,7 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
 
               if (event.type === "dialog" || event.type === "background-dialog") {
                 let showTimestamp = false;
+
                 if (lastTimeString === null) {
                   showTimestamp = true;
                 } else {
@@ -99,7 +100,10 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
               } else if (event.type === "prompt") {
                 result = <Prompt prompt={event} />;
               } else if (event.type === "action") {
-                result = <Action event={event} />
+                result = <Actions
+                  event={event}
+                  onClick={(id: string) => { markActionAsTaken(id) }}
+                />
               } else if (event.type === "describe") {
                 result = <Describe event={event} />
               } else {

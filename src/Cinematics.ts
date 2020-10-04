@@ -1,4 +1,4 @@
-import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedPrompt as DisplayedPromptEvent } from "./App";
+import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
 import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent } from "./CinematicTypes";
 import { eatChicken, Locations } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
@@ -104,6 +104,8 @@ export function* runEvents(events: CinematicEvent[]): Cinematic {
       yield* runActionEvent(event)
     } else if (event.type === "background-dialog") {
       yield* runSpeakEvent(event, { background: true })
+    } else if (event.type === "inventory") {
+      yield* addToInventory(event.item);
     }
   }
 }
@@ -213,6 +215,7 @@ export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
     {
       ...actionEvent,
       id: generateId(),
+      hasTakenAction: false,
     },
   ]);
 }
@@ -256,6 +259,15 @@ export function* displayText(): Cinematic {
 
   // yield* runPromptEvent(TestPrompt)
   yield* runChangeLocation(Locations.Bar);
+}
+
+export function* addToInventory(item: keyof Inventory): Cinematic {
+  const actions = yield "next";
+
+  //hello :) 
+
+  // hi fix please thanks :D
+  actions.setInventory({ ...actions.inventory, [item]: true })
 }
 
 export function* hello(): Cinematic {

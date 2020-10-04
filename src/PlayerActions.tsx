@@ -1,14 +1,26 @@
 import React from 'react';
-import { CinematicState, DisplayedDescribe } from './App';
-import { runChangeLocation, runDescribeEvent } from './Cinematics';
-import { ActionEvent, DescribeEvent, CinematicEvent, Location } from './CinematicTypes';
+import { CinematicState, DisplayedAction, DisplayedDescribe } from './App';
+import { runChangeLocation, runDescribeEvent, runEvents } from './Cinematics';
+import { DescribeEvent, CinematicEvent, Location } from './CinematicTypes';
 import { LocationNames, Locations } from './Data';
 
-export const Action = ({ event }: { event: ActionEvent }) => {
+export const Actions = ({ event, onClick }: {
+  event: DisplayedAction;
+  onClick: (id: string) => void;
+}) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      {event.options.map((o) => <button onClick={o.onClick} style={{ border: "none" }}>{o.text}
-      </button>)}
+      {
+        event.options.map(o =>
+          <button
+            disabled={event.hasTakenAction}
+            onClick={() => { onClick(event.id); o.onClick && o.onClick(); }}
+            style={{ border: "none" }}
+          >
+            {o.text}
+          </button>
+        )
+      }
     </div>
   );
 }
@@ -41,23 +53,27 @@ export const Describe = ({ event }: { event: DisplayedDescribe }) => {
 
 
 export const PlayerActions = ({ location, cinematicState }: { location: Location, cinematicState: CinematicState }) => {
-
   const canChangeLocations = (currentLocation: Location, nextLocation: LocationNames) => {
     return currentLocation.exits.includes(nextLocation);
-  }
-  const onClickActionItem = (action: string, i: number) => {
+  };
+
+  const onClickActionItem = React.useCallback((action: string, i: number) => {
     let actionText = "";
     let nextDialog: CinematicEvent = { type: "describe", text: "" };
 
     switch (action) {
       case "Explore": {
         actionText = "You look around.";
+
         if (location.exits.length === 0) {
-          nextDialog = { type: "describe", text: "This room doesn't have any doors. Strange." };
+          // lol
+          nextDialog = { type: "describe", text: "This room doesn't have any doors. Strange; how did you get here?" };
         } else {
           nextDialog = { type: "action", options: [] }
+
           for (const exit of location.exits) {
-            const text = exit === "Outdoors" ? `> Go ${exit.toLowerCase()}` : `> Go to ${exit.toLowerCase()}`
+            const text = exit === "Outdoors" ? `> Go ${exit.toLowerCase()}` : `> Go to ${exit.toLowerCase()}`;
+
             nextDialog.options.push({
               text: text,
               onClick: () => {
@@ -70,6 +86,7 @@ export const PlayerActions = ({ location, cinematicState }: { location: Location
             })
           }
         }
+
         break;
       }
       case "Inventory": {
@@ -86,8 +103,10 @@ export const PlayerActions = ({ location, cinematicState }: { location: Location
           nextDialog = { type: "action", options: [] }
 
           for (const person of location.people) {
-            const text = `> Talk to ${person.toLowerCase()}`;
-            nextDialog.options.push({ text: text })
+            const dialog = person.dialog;
+            const text = `> Talk to ${person.name.toLowerCase()}`;
+
+            nextDialog.options.push({ text: text, onClick: () => { cinematicState.runCinematic(runEvents(dialog)) } })
           }
         }
         break;
@@ -99,10 +118,11 @@ export const PlayerActions = ({ location, cinematicState }: { location: Location
     if (cinematicState.cinematics.length === 0) {
       cinematicState.runCinematic(runDescribeEvent(event));
     }
-  }
+  }, [cinematicState.cinematics.length, location.name]);
 
   // TODO: This (setting width:160) is a hacky way of aligning divs pixel-perfectly,
   // might break stuff. 
+
   return (
     <div style={{ display: "flex", justifyContent: "center" }}>
       <div style={{ width: 160 }}>

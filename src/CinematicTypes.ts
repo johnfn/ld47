@@ -1,7 +1,7 @@
-import { DisplayedEvent } from "./App";
+import { DisplayedEvent, Inventory } from "./App";
 import { LocationNames as LocationName } from "./Data";
 
-export type CinematicEvent = DialogEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundDialog;
+export type CinematicEvent = DialogEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundDialog | InventoryEvent;
 
 export type ActionType =
   | 'Talk'
@@ -37,6 +37,11 @@ export type BackgroundDialog = {
   type: "background-dialog";
 };
 
+export type InventoryEvent = {
+  type: "inventory";
+  item: keyof Inventory;
+}
+
 
 export type PromptOption = {
   text: string;
@@ -55,7 +60,7 @@ export type LiveEvent = {
 export type Location = {
   description: string[];
   name: LocationName;
-  people: string[];
+  people: { name: string, dialog: DialogEvent[] }[];
   exits: LocationName[];
   actions: ActionType[];
   liveEvents: {
@@ -69,6 +74,7 @@ export const PromptSelectionKeys = ["A", "S", "D", "F", "Z", "X", "C", "V"] as c
 export type CinematicArgs = {
   setEvents: React.Dispatch<React.SetStateAction<DisplayedEvent[]>>;
   events: DisplayedEvent[];
+
   dateString: string;
   timeString: string;
 
@@ -80,6 +86,9 @@ export type CinematicArgs = {
 
   setActiveLocation: React.Dispatch<React.SetStateAction<Location>>;
   activeLocation: Location;
+
+  setInventory: React.Dispatch<React.SetStateAction<Inventory>>;
+  inventory: Inventory;
 };
 
 export type Cinematic<T = void> = Generator<"next", T, CinematicArgs>;

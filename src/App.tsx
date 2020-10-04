@@ -19,8 +19,15 @@ export type DisplayedBackgroundDialog = { speaker: string; text: string; id: str
 export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; };
 export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; };
 export type DisplayedAction = {
-  type: "action"; options: { text: string; onClick?: () => void; }[]; id: string;
+  type: "action";
+  options: { text: string; onClick?: () => void; }[]; id: string;
+  hasTakenAction: boolean;
 };
+
+export type Inventory = {
+  key: boolean,
+  book: boolean
+}
 
 export type DisplayedEvent =
   | DisplayedDialog
@@ -32,6 +39,8 @@ export type DisplayedEvent =
 
 const App = () => {
   const [events, setEvents] = React.useState<DisplayedEvent[]>([]);
+
+  const [inventory, setInventory] = React.useState<Inventory>({ key: false, book: false })
 
   const [dialogLineFinished, setDialogLineFinished] = React.useState(false);
   const [showPromptFinishedMessage, setShowPromptFinishedMessage] = React.useState(false);
@@ -78,6 +87,8 @@ const App = () => {
         setActiveLocation,
         dateString,
         timeString,
+        inventory,
+        setInventory,
       });
 
       if (result.done) {
@@ -130,7 +141,28 @@ const App = () => {
           dialogLineFinished={dialogLineFinished}
           location={activeLocation}
           promptFinished={showPromptFinishedMessage}
-          cinematicState={cinematicState} />
+          cinematicState={cinematicState}
+          markActionAsTaken={(id) => {
+            setEvents(prevEvents => {
+              const newEvents = [...prevEvents];
+              const index = newEvents.findIndex(ev => ev.id === id);
+              const prevEvent = newEvents[index];
+
+              if (prevEvent.type === "action") {
+                const newEvent: DisplayedAction = {
+                  ...prevEvent,
+                  hasTakenAction: true,
+                };
+
+                newEvents[index] = newEvent;
+              } else {
+                alert("Error: tried to update action but it wasnt an action");
+              }
+
+              return newEvents;
+            })
+          }}
+        />
       </div>
     </div>
   );
