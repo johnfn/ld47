@@ -43,7 +43,7 @@ export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
         );
       }
       case "Inventory": {
-        // todo: hook up to state
+        // TODO: hook up to state
         const inventory = ["thing 1", "thing 2", "thing 3"];
         if (inventory.length === 0) { return <div style={childStyle}>There is nothing in your inventory.</div> }
         return (<div style={containerStyle}>{inventory.map((p) => { return <button style={childStyle}>{p}</button> })}</div>)
@@ -90,7 +90,7 @@ export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
       height: 180,
       border: '1px solid black'
     }} />
-    <div style={{
+    {/* <div style={{
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-around",
@@ -108,7 +108,7 @@ export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
         );
       })}
     </div>
-    {openMenu !== null ? renderOptions(openMenu) : <span></span>}
+    {openMenu !== null ? renderOptions(openMenu) : <span></span>} */}
   </div >
   );
 }

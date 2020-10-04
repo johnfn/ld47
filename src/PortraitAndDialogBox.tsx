@@ -1,11 +1,11 @@
 import React from 'react';
-import { ActionEvent, DialogEvent, PromptEvent, PromptSelectionKeys, SpeakEvent } from './CinematicTypes';
+import { ActionEvent, CinematicEvent, PromptEvent, PromptSelectionKeys, DialogEvent } from './CinematicTypes';
 import { Dialog } from './Dialog'
 import { Action, Describe } from './PlayerActions';
 import Portrait from './images/portrait2.png';
 import { PlayerActions } from './PlayerActions';
 import { Location } from './CinematicTypes';
-import { CinematicState } from './App';
+import { CinematicState, DisplayedEvent } from './App';
 
 const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
   return (
@@ -29,13 +29,13 @@ const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
 
 
 export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinished, location, cinematicState }: {
-  events: DialogEvent[];
+  events: DisplayedEvent[];
   dialogLineFinished: boolean;
   promptFinished: boolean;
   location: Location;
   cinematicState: CinematicState
 }) => {
-  const speakingEvents: SpeakEvent[] = [];
+  const speakingEvents: DialogEvent[] = [];
   const promptEvents: PromptEvent[] = [];
 
   for (const event of events) {
@@ -64,25 +64,27 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: 20,
+        padding: "20px 15px 20px 20px",
         width: 220,
         backgroundColor: "white",
         border: '1px solid black',
       }}>
         <div style={{
           overflow: 'auto',
+
         }}>
+
           {
             events.map(event => {
               let result: React.ReactNode;
 
-              if (event.type === "dialog") {
+              if (event.type === "dialog" || event.type === "background-dialog") {
                 let showTimestamp = false;
                 if (lastTimeString === null) {
                   showTimestamp = true;
                 } else {
                   const prevTime = (lastTimeString.split(" ")[0]).split(":").map(x => Number(x));
-                  const nowTime = (event.timeString.split(" ")[0]).split(":").map(x => Number(x));
+                  const nowTime = (event.time.split(" ")[0]).split(":").map(x => Number(x));
 
                   const prevTimeMinutes = prevTime[0] * 60 + prevTime[1];
                   const nowTimeMinutes = nowTime[0] * 60 + nowTime[1];
@@ -93,25 +95,20 @@ export const PortraitAndDialogBox = ({ events, dialogLineFinished, promptFinishe
                 }
 
                 result = <Dialog event={event} showTimestamp={showTimestamp} />
-
-                lastTimeString = event.timeString;
+                lastTimeString = event.time;
               } else if (event.type === "prompt") {
                 result = <Prompt prompt={event} />;
-              }
-              else if (event.type === "action") {
+              } else if (event.type === "action") {
                 result = <Action event={event} />
-              }
-              else if (event.type === "describe") {
+              } else if (event.type === "describe") {
                 result = <Describe event={event} />
-              }
-              else {
+              } else {
                 alert("unhandled event type");
               }
 
               return result;
             })
           }
-
           {
             dialogLineFinished &&
             <div style={{ color: 'lightgray', paddingTop: '20px' }}>

@@ -1,19 +1,37 @@
-import { SpeakEvent, Cinematic, DialogEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent, DescribeEvent, BackgroundEvent } from "./CinematicTypes";
+import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedPrompt as DisplayedPromptEvent } from "./App";
+import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptOption, PromptSelectionKeys, Location, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent } from "./CinematicTypes";
 import { eatChicken, Locations } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
-export function* runSpeakEvent(event: SpeakEvent | BackgroundEvent, props: { background?: boolean } = {}): Cinematic {
+let lastUsedId = 0;
+
+const generateId = () => {
+  return String(++lastUsedId);
+};
+
+// TODO: Would be cool if when the speaker is the same twice in a row, we omit the speaker header the second time.
+//
+// NARRATOR        10:02 PM
+//   sup.
+//   how are you.  10:03 PM <-- time is onHover only
+//
+// instead of:
+//
+// NARRATOR        10:02 PM
+//   sup.
+// NARRATOR        10:03 PM
+//   how are you.  
+
+export function* runSpeakEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean } = {}): Cinematic {
   const background = props?.background;
   let actions = yield "next";
   const timeString = actions.timeString;
 
   const { speaker, text } = event;
-  const dialogResult: SpeakEvent = { speaker, text: "", type: "dialog", timeString: timeString };
-  let index = -1;
+  const id = generateId();
+  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id };
 
   actions.setEvents(oldEvents => {
-    index = oldEvents.length;
-
     return [...oldEvents, dialogResult];
   });
 
@@ -21,8 +39,9 @@ export function* runSpeakEvent(event: SpeakEvent | BackgroundEvent, props: { bac
     dialogResult.text += character;
     actions.setEvents(oldEvents => {
       const newEvents = [...oldEvents];
+      const indexToUpdate = newEvents.findIndex(ev => ev.id === id);
 
-      newEvents[index] = dialogResult;
+      newEvents[indexToUpdate] = dialogResult;
       return newEvents;
     });
 
@@ -33,14 +52,13 @@ export function* runSpeakEvent(event: SpeakEvent | BackgroundEvent, props: { bac
     actions = yield "next";
   }
 
+  dialogResult.text = text;
+
   actions.setEvents(oldEvents => {
     const newEvents = [...oldEvents];
-    newEvents[index] = {
-      speaker,
-      text,
-      type: "dialog",
-      timeString: timeString,
-    }
+    const indexToUpdate = newEvents.findIndex(ev => ev.id === id);
+
+    newEvents[indexToUpdate] = dialogResult;
 
     return newEvents;
   });
@@ -74,7 +92,7 @@ export function* waitForKeys(keys: KeyName[]): Cinematic<KeyName> {
   }
 }
 
-export function* runEvents(events: DialogEvent[]): Cinematic {
+export function* runEvents(events: CinematicEvent[]): Cinematic {
   let actions = yield "next";
 
   for (const event of events) {
@@ -84,7 +102,7 @@ export function* runEvents(events: DialogEvent[]): Cinematic {
       yield* runPromptEvent(event)
     } else if (event.type === "action") {
       yield* runActionEvent(event)
-    } else if (event.type === "background-event") {
+    } else if (event.type === "background-dialog") {
       yield* runSpeakEvent(event, { background: true })
     }
   }
@@ -93,15 +111,15 @@ export function* runEvents(events: DialogEvent[]): Cinematic {
 export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   let actions = yield "next";
 
-  const newEvent: PromptEvent = {
+  const id = generateId();
+  const newEvent: DisplayedPromptEvent = {
     options: [],
     type: "prompt",
+    id,
+    time: actions.timeString,
   };
-  let index = -1;
 
   actions.setEvents(oldActions => {
-    index = oldActions.length;
-
     return [...oldActions, newEvent];
   });
 
@@ -118,7 +136,8 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
 
       actions.setEvents(oldActions => {
         const newActions = [...oldActions];
-        newActions[index] = newEvent;
+        const indexToUpdate = newActions.findIndex(action => action.id === id);
+        newActions[indexToUpdate] = newEvent;
 
         return newActions;
       })
@@ -129,7 +148,8 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
 
   actions.setEvents(oldActions => {
     const newActions = [...oldActions];
-    newActions[index] = newEvent;
+    const indexToUpdate = newActions.findIndex(action => action.id === id);
+    newActions[indexToUpdate] = newEvent;
 
     return newActions;
   })
@@ -150,21 +170,39 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   yield* runEvents(selectedOption.nextDialog);
 }
 
+
+// TODO: Prevent user from launching the same Describe event 5 million times?
+// TODO: Make old describe event actions unclickable, since the state has changed.
 export function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
   let actions = yield "next";
 
-  actions.setEvents([
-    ...actions.events,
-    describeEvent,
-  ]);
+  const timeString = actions.timeString;
+  const id = generateId();
+  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id };
 
-  actions = yield "next";
+  actions.setEvents(oldEvents => {
+    return [...oldEvents, newEvent];
+  });
+
+  for (const character of describeEvent.text) {
+    newEvent.text += character;
+    actions.setEvents(oldEvents => {
+      const newEvents = [...oldEvents];
+      const indexToUpdate = newEvents.findIndex(event => event.id === id);
+
+      newEvents[indexToUpdate] = newEvent;
+      return newEvents;
+    });
+
+    if (Keyboard.justDown.Spacebar) {
+      break;
+    }
+
+    actions = yield "next";
+  }
 
   if (describeEvent.nextDialog) {
-    for (const next of describeEvent.nextDialog) {
-      actions.setEvents([...actions.events, next])
-      actions = yield "next";
-    }
+    yield* runEvents([describeEvent.nextDialog]);
   }
 }
 export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
@@ -172,7 +210,10 @@ export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
 
   actions.setEvents([
     ...actions.events,
-    actionEvent,
+    {
+      ...actionEvent,
+      id: generateId(),
+    },
   ]);
 }
 
@@ -186,7 +227,6 @@ export function* runChangeLocation(location: Location): Cinematic {
       speaker: "Narrator",
       text,
       type: "dialog",
-      timeString: actions.timeString,
     })
   }
 }

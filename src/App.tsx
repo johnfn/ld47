@@ -4,9 +4,9 @@ import Background from './images/img_placeholder.png';
 import { Clock, useClock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
-import { displayText, hello } from './Cinematics';
+import { displayText, runEvents } from './Cinematics';
 import { Keyboard } from './Keyboard';
-import { DialogEvent, Cinematic, Location } from './CinematicTypes';
+import { Cinematic, Location, PromptOption } from './CinematicTypes';
 import { Locations } from './Data';
 
 export type CinematicState = {
@@ -14,8 +14,24 @@ export type CinematicState = {
   cinematics: Cinematic[];
 }
 
+export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; }
+export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; };
+export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; };
+export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; };
+export type DisplayedAction = {
+  type: "action"; options: { text: string; onClick?: () => void; }[]; id: string;
+};
+
+export type DisplayedEvent =
+  | DisplayedDialog
+  | DisplayedPrompt
+  | DisplayedBackgroundDialog
+  | DisplayedDescribe
+  | DisplayedAction
+  ;
+
 const App = () => {
-  const [events, setEvents] = React.useState<DialogEvent[]>([]);
+  const [events, setEvents] = React.useState<DisplayedEvent[]>([]);
 
   const [dialogLineFinished, setDialogLineFinished] = React.useState(false);
   const [showPromptFinishedMessage, setShowPromptFinishedMessage] = React.useState(false);
@@ -34,7 +50,7 @@ const App = () => {
     });
   }, [cinematicState.cinematics.length]);
 
-  const [test, setTest] = React.useState(false);
+  const [triggeredLiveEvents, setTriggeredLiveEvents] = React.useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     setCinematicState({
@@ -77,10 +93,18 @@ const App = () => {
       runCinematic,
     });
 
-    if (!test && timeString.toLowerCase() === "11:01 am") {
-      runCinematic(hello());
-      setTest(true);
+    for (const liveEvent of activeLocation.liveEvents) {
+      const eventKey = liveEvent.time + "|" + activeLocation.name;
+
+      if (!triggeredLiveEvents[eventKey] && liveEvent.time.toLowerCase() === timeString.toLowerCase()) {
+        runCinematic(runEvents([liveEvent.event]));
+        setTriggeredLiveEvents({
+          ...triggeredLiveEvents,
+          [eventKey]: true,
+        });
+      }
     }
+
   }, 20);
 
   return (

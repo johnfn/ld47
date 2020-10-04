@@ -1,16 +1,17 @@
-import { LocationNames } from "./Data";
+import { DisplayedEvent } from "./App";
+import { LocationNames as LocationName } from "./Data";
 
-export type DialogEvent = SpeakEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundEvent;
+export type CinematicEvent = DialogEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundDialog;
 
 export type ActionType =
   | 'Talk'
   | 'Explore'
   | 'Inventory'
 
-export type SpeakEvent = {
+export type DialogEvent = {
   speaker: string;
   text: string;
-  timeString: string;
+  nextDialog?: CinematicEvent[];
   type: "dialog"
 }
 
@@ -20,32 +21,30 @@ export type PromptEvent = {
 }
 
 export type ActionEvent = {
-  text: string;
   type: "action";
-  onClick?: () => void;
+  options: { text: string; onClick?: () => void; }[]
 };
 
 export type DescribeEvent = {
   text: string;
-  nextDialog?: DialogEvent[];
+  nextDialog?: CinematicEvent;
   type: "describe";
 };
 
-export type BackgroundEvent = {
+export type BackgroundDialog = {
   speaker: string;
   text: string;
-  timeString: string;
-  type: "background-event";
+  type: "background-dialog";
 };
 
 
 export type PromptOption = {
   text: string;
-  nextDialog: DialogEvent[];
+  nextDialog: CinematicEvent[];
 }
 
 export type AllLocations = {
-  [key in LocationNames]: Location;
+  [key in LocationName]: Location;
 }
 
 export type LiveEvent = {
@@ -55,17 +54,21 @@ export type LiveEvent = {
 
 export type Location = {
   description: string[];
+  name: LocationName;
   people: string[];
-  exits: LocationNames[];
+  exits: LocationName[];
   actions: ActionType[];
-  liveEvents: LiveEvent[];
+  liveEvents: {
+    time: string;
+    event: BackgroundDialog;
+  }[];
 }
 
 export const PromptSelectionKeys = ["A", "S", "D", "F", "Z", "X", "C", "V"] as const;
 
 export type CinematicArgs = {
-  setEvents: React.Dispatch<React.SetStateAction<DialogEvent[]>>;
-  events: DialogEvent[];
+  setEvents: React.Dispatch<React.SetStateAction<DisplayedEvent[]>>;
+  events: DisplayedEvent[];
   dateString: string;
   timeString: string;
 

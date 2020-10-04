@@ -1,21 +1,6 @@
 import React from 'react';
 import { useInterval } from './ use_interval';
 
-const months: { [key: number]: string } = {
-  0: "January",
-  1: "February",
-  2: "March",
-  3: "April",
-  4: "May",
-  5: "June",
-  6: "July",
-  7: "August",
-  8: "September",
-  9: "October",
-  10: "November",
-  11: "December"
-}
-
 export const useClock = (): { dateString: string, timeString: string } => {
   const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
@@ -38,13 +23,14 @@ export const useClock = (): { dateString: string, timeString: string } => {
   };
 };
 
+// TODO: MAKE THIS GODDAMN CLOCK PIXEL PERFECT RARRHFHFJF
 export const Clock = ({ dateString, timeString }: {
   timeString: string;
   dateString: string;
 }) => {
   return (<div style={{ width: 150 }}>
     <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>{timeString}</div>
-    <div style={{ backgroundColor: "white", border: '1px solid black', alignSelf: "flex-end", width: 80 }}>{dateString}</div>
+    <div style={{ backgroundColor: "white", border: '1px solid black', borderTop: "none", alignSelf: "flex-end", width: 80 }}>{dateString}</div>
   </div>
   )
 }

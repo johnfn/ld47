@@ -14,6 +14,10 @@
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 
+*::-webkit-scrollbar {
+  display: none;
+}
+
 button {
   background: white;
 	color: inherit;
