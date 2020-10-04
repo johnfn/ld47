@@ -262,12 +262,13 @@ export function* displayText(): Cinematic {
 }
 
 export function* addToInventory(item: keyof Inventory): Cinematic {
-  const actions = yield "next";
+  let actions = yield "next";
 
-  //hello :) 
-
-  // hi fix please thanks :D
   actions.setInventory({ ...actions.inventory, [item]: true })
+
+  const titledCasedItem = item.charAt(0).toUpperCase() + item.slice(1)
+  const getEvent: DialogEvent = { type: "dialog", speaker: "narrator", text: `${titledCasedItem} was added to your inventory.` }
+  yield* runSpeakEvent(getEvent);
 }
 
 export function* hello(): Cinematic {

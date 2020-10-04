@@ -24,10 +24,8 @@ export type DisplayedAction = {
   hasTakenAction: boolean;
 };
 
-export type Inventory = {
-  key: boolean,
-  book: boolean
-}
+export type InventoryItem = "key" | "book";
+export type Inventory = { [K in InventoryItem]: boolean }
 
 export type DisplayedEvent =
   | DisplayedDialog
@@ -137,6 +135,7 @@ const App = () => {
         </div>
 
         <PortraitAndDialogBox
+          inventory={inventory}
           events={events}
           dialogLineFinished={dialogLineFinished}
           location={activeLocation}

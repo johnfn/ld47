@@ -60,7 +60,7 @@ export type LiveEvent = {
 export type Location = {
   description: string[];
   name: LocationName;
-  people: { name: string, dialog: DialogEvent[] }[];
+  people: { name: string, dialog: CinematicEvent[] }[];
   exits: LocationName[];
   actions: ActionType[];
   liveEvents: {

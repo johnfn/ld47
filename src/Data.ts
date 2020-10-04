@@ -56,8 +56,20 @@ export const Locations: AllLocations = {
       'Hey, Joe is still bartending!',
     ],
     people: [
-      { name: 'Bartender', dialog: [{ type: 'dialog', speaker: 'Bartender', text: "Hi! I'm Bartender.", }] },
-      { name: 'Guy 2', dialog: [{ type: 'dialog', speaker: 'Guy 2', text: "Hi! I'm Guy 2.", }] },
+      {
+        name: 'Bartender', dialog: [
+          { type: 'dialog', speaker: 'Bartender', text: "Hi! I'm the bartender round these parts.", },
+          { type: 'dialog', speaker: 'Bartender', text: "BLah blah blah blah", },
+          { type: 'dialog', speaker: 'Bartender', text: "Blee blee blee blee", },
+          { type: 'dialog', speaker: 'Bartender', text: "Blooooooooooooooooo", },
+        ]
+      },
+      {
+        name: 'Guy 2', dialog: [
+          { type: 'dialog', speaker: 'Guy 2', text: "Hi! I'm Guy 2. Here is a book." },
+          { type: 'inventory', item: "book" }
+        ]
+      },
     ],
     exits: [
       'Outdoors',

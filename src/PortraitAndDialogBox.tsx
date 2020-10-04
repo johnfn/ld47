@@ -5,7 +5,7 @@ import { Actions, Describe } from './PlayerActions';
 import Portrait from './images/portrait2.png';
 import { PlayerActions } from './PlayerActions';
 import { Location } from './CinematicTypes';
-import { CinematicState, DisplayedEvent } from './App';
+import { CinematicState, DisplayedEvent, Inventory } from './App';
 
 const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
   return (
@@ -28,16 +28,24 @@ const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
 };
 
 
-export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFinished, promptFinished, location, cinematicState }: {
+export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFinished, promptFinished, location, cinematicState, inventory }: {
   events: DisplayedEvent[];
   dialogLineFinished: boolean;
   promptFinished: boolean;
   location: Location;
   cinematicState: CinematicState;
   markActionAsTaken: (id: string) => void;
+  inventory: Inventory;
 }) => {
   const speakingEvents: DialogEvent[] = [];
   const promptEvents: PromptEvent[] = [];
+  const panelRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (panelRef.current) {
+      panelRef.current.scrollTop = panelRef.current?.scrollHeight;
+    }
+  }, [events.length]);
 
   for (const event of events) {
     if (event.type === "dialog") {
@@ -70,10 +78,13 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFini
         backgroundColor: "white",
         border: '1px solid black',
       }}>
-        <div style={{
-          overflow: 'auto',
-        }}>
-
+        <div
+          ref={panelRef}
+          style={{
+            overflow: 'auto',
+            paddingBottom: "100px",
+          }}
+        >
           {
             events.map(event => {
               let result: React.ReactNode;
@@ -128,7 +139,7 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, dialogLineFini
           }
         </div>
 
-        <PlayerActions cinematicState={cinematicState} location={location} />
+        <PlayerActions events={events} inventory={inventory} cinematicState={cinematicState} location={location} />
       </div>
     </div >);
 }

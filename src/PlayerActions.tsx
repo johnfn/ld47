@@ -1,8 +1,9 @@
 import React from 'react';
-import { CinematicState, DisplayedAction, DisplayedDescribe } from './App';
+import { CinematicState, DisplayedAction, DisplayedDescribe, DisplayedEvent, Inventory, InventoryItem } from './App';
 import { runChangeLocation, runDescribeEvent, runEvents } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location } from './CinematicTypes';
 import { LocationNames, Locations } from './Data';
+import { Keys } from './Utils';
 
 export const Actions = ({ event, onClick }: {
   event: DisplayedAction;
@@ -52,7 +53,12 @@ export const Describe = ({ event }: { event: DisplayedDescribe }) => {
 }
 
 
-export const PlayerActions = ({ location, cinematicState }: { location: Location, cinematicState: CinematicState }) => {
+export const PlayerActions = ({ events, inventory, location, cinematicState }: {
+  events: DisplayedEvent[],
+  location: Location,
+  cinematicState: CinematicState,
+  inventory: Inventory,
+}) => {
   const canChangeLocations = (currentLocation: Location, nextLocation: LocationNames) => {
     return currentLocation.exits.includes(nextLocation);
   };
@@ -79,7 +85,6 @@ export const PlayerActions = ({ location, cinematicState }: { location: Location
               onClick: () => {
                 // TODO- we can allow for interruptions now, so this check is pretty unnecessary... but eh
                 if (cinematicState.cinematics.length === 0 && canChangeLocations(location, exit)) {
-                  console.log("Hello, I am running a explore cinematic.");
                   cinematicState.runCinematic(runChangeLocation(Locations[exit]))
                 }
               }
@@ -91,12 +96,29 @@ export const PlayerActions = ({ location, cinematicState }: { location: Location
       }
       case "Inventory": {
         actionText = "You reach into your bag.";
-        nextDialog = { type: "describe", text: "There's nothing in there." };
+
+        let items = [];
+        for (const item of Keys(inventory)) {
+          if (inventory[item] === true) {
+            items.push(inventory[item]);
+          }
+        }
+        if (items.length === 0) {
+          nextDialog = { type: "describe", text: "There's nothing in there." };
+        } else {
+          nextDialog = { type: "action", options: [] }
+
+          for (const item of items) {
+            const text = `> Use ${item}`;
+            nextDialog.options.push({ text: text, onClick: () => { } })
+          }
+        }
 
         break;
       }
       case "Talk": {
         actionText = "You check who's nearby.";
+
         if (location.people.length === 0) {
           nextDialog = { type: "describe", text: "There doesn't seem to be anyone around." }
         } else {
@@ -114,6 +136,7 @@ export const PlayerActions = ({ location, cinematicState }: { location: Location
     }
 
     const event: DescribeEvent = { type: "describe", text: actionText, nextDialog };
+    console.log(event);
 
     if (cinematicState.cinematics.length === 0) {
       cinematicState.runCinematic(runDescribeEvent(event));
@@ -128,16 +151,43 @@ export const PlayerActions = ({ location, cinematicState }: { location: Location
       <div style={{ width: 160 }}>
         {
           location.actions.map((action, i) => {
-            return (<>
-              <button
-                onClick={() => { onClickActionItem(action, i) }}
-                disabled={cinematicState.cinematics.length > 0} // TODO - this check is also unnecessary
-                style={{ border: "none", margin: 2 }}>
-                {action}
-              </button>
-              <span> {i !== location.actions.length - 1 ? " | " : null}</span>
-            </>
-            )
+
+            // disable if the most recent action (which is not a bg action) is
+            // * a description or
+            // * an event
+            let disabled = false;
+
+            for (const event of events.slice().reverse()) {
+              if (event.type === "background-dialog") {
+                continue;
+              }
+
+              if (event.type === "describe") {
+                disabled = true;
+                break;
+              }
+
+              if (event.type === "action") {
+                disabled = true;
+                break;
+              }
+
+              disabled = false;
+              break;
+            }
+
+            return (
+              <>
+                <button
+                  onClick={() => { onClickActionItem(action, i) }}
+                  disabled={disabled}
+                  style={{ border: "none", margin: 2 }}>
+                  {action}
+                </button>
+
+                <span> {i !== location.actions.length - 1 ? " | " : null}</span>
+              </>
+            );
           })
         }
       </div>
