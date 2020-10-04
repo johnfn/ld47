@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import useInterval from './ use_interval';
 import Background from './images/img_placeholder.png';
 import { Clock, useClock } from './Clock';
@@ -8,11 +8,6 @@ import { displayText, runEvents } from './Cinematics';
 import { Keyboard } from './Keyboard';
 import { Cinematic, Location, PromptOption } from './CinematicTypes';
 import { Locations } from './Data';
-
-export type CinematicState = {
-  runCinematic: (cinematic: Cinematic) => void;
-  cinematics: Cinematic[];
-}
 
 export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; }
 export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; isThisFinished: boolean; };
@@ -27,7 +22,12 @@ export type DisplayedAction = {
 };
 
 export type InventoryItem = "key" | "book";
-export type Inventory = { [K in InventoryItem]: boolean }
+export type Inventory = { [K in InventoryItem]: boolean };
+
+export type CinematicState = {
+  cinematic: Cinematic;
+  status: "running" | "paused";
+}
 
 export type DisplayedEvent =
   | DisplayedDialog
@@ -39,33 +39,19 @@ export type DisplayedEvent =
 
 const App = () => {
   const [events, setEvents] = React.useState<DisplayedEvent[]>([]);
-
   const [inventory, setInventory] = React.useState<Inventory>({ key: false, book: false })
-
   const [activeLocation, setActiveLocation] = React.useState<Location>(Locations.Bar);
   const { dateString, timeString } = useClock();
-
-  const [cinematicState, setCinematicState] = React.useState<CinematicState>({
-    cinematics: [],
-    runCinematic: null as any, // circular dependency makes this tricky
-  });
-
-  const runCinematic = useCallback((cinematic: Cinematic) => {
-    setCinematicState({
-      cinematics: [...cinematicState.cinematics, cinematic],
-      runCinematic,
-    });
-  }, [cinematicState.cinematics.length]);
-
+  const [cinematics, setCinematics] = React.useState<CinematicState[]>([]);
   const [triggeredLiveEvents, setTriggeredLiveEvents] = React.useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    setCinematicState({
-      cinematics: [],
-      runCinematic: runCinematic,
-    });
-
-    runCinematic(displayText());
+    setCinematics([
+      {
+        cinematic: displayText(),
+        status: "running",
+      },
+    ])
   }, []);
 
   // is this the game loop. k thx np np
@@ -73,7 +59,11 @@ const App = () => {
   useInterval(() => {
     Keyboard.update();
 
-    const newCinematics = cinematicState.cinematics.map(cinematic => {
+    const newCinematics = cinematics.map(({ cinematic, status }) => {
+      if (status === "paused") {
+        return { cinematic, status };
+      }
+
       const result = cinematic.next({
         setEvents: setEvents,
         events: events,
@@ -95,26 +85,25 @@ const App = () => {
         return null;
       }
 
-      return cinematic;
-    }).filter((x): x is Cinematic => x !== null);
+      return { cinematic, status: "running" };
+    }).filter((x): x is CinematicState => x !== null);
 
-    setCinematicState({
-      cinematics: newCinematics,
-      runCinematic,
-    });
+    setCinematics(_ => newCinematics);
 
     for (const liveEvent of activeLocation.liveEvents) {
       const eventKey = liveEvent.time + "|" + activeLocation.name;
 
       if (!triggeredLiveEvents[eventKey] && liveEvent.time.toLowerCase() === timeString.toLowerCase()) {
-        runCinematic(runEvents([liveEvent.event]));
+        setCinematics(prev => [
+          ...prev,
+          { cinematic: runEvents([liveEvent.event]), status: "running" },
+        ]);
         setTriggeredLiveEvents({
           ...triggeredLiveEvents,
           [eventKey]: true,
         });
       }
     }
-
   }, 20);
 
   return (
@@ -132,14 +121,14 @@ const App = () => {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', }}>
           <Clock dateString={dateString} timeString={timeString} />
-          <PortraitAndActions cinematicState={cinematicState} location={activeLocation} />
+          <PortraitAndActions setCinematics={setCinematics} location={activeLocation} />
         </div>
 
         <PortraitAndDialogBox
           inventory={inventory}
           events={events}
           location={activeLocation}
-          cinematicState={cinematicState}
+          setCinematics={setCinematics}
           markActionAsTaken={(id) => {
             setEvents(prevEvents => {
               const newEvents = [...prevEvents];

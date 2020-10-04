@@ -1,7 +1,7 @@
 import React from 'react';
 import { CinematicState, DisplayedAction, DisplayedDescribe, DisplayedEvent, Inventory, InventoryItem } from './App';
 import { runEvents } from './Cinematics';
-import { DescribeEvent, CinematicEvent, Location } from './CinematicTypes';
+import { DescribeEvent, CinematicEvent, Location, Cinematic } from './CinematicTypes';
 import { LocationNames, Locations } from './Data';
 import { Keys } from './Utils';
 
@@ -53,10 +53,10 @@ export const Describe = ({ event }: { event: DisplayedDescribe }) => {
 }
 
 
-export const PlayerActions = ({ events, inventory, location, cinematicState }: {
+export const PlayerActions = ({ events, inventory, location, setCinematics }: {
   events: DisplayedEvent[],
   location: Location,
-  cinematicState: CinematicState,
+  setCinematics: React.Dispatch<React.SetStateAction<CinematicState[]>>;
   inventory: Inventory,
 }) => {
   const canChangeLocations = (currentLocation: Location, nextLocation: LocationNames) => {
@@ -75,7 +75,7 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
           // lol
           nextDialog = { type: "describe", text: "This room doesn't have any doors. Strange; how did you get here?" };
         } else {
-          nextDialog = { type: "action", options: [] }
+          nextDialog = { type: "action", options: [] };
 
           for (const exit of location.exits) {
             const text = exit === "Outdoors" ? `> Go ${exit.toLowerCase()}` : `> Go to ${exit.toLowerCase()}`;
@@ -83,12 +83,18 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
             nextDialog.options.push({
               text: text,
               onClick: () => {
-                // TODO- we can allow for interruptions now, so this check is pretty unnecessary... but eh
-                if (cinematicState.cinematics.length === 0 && canChangeLocations(location, exit)) {
-                  cinematicState.runCinematic(runEvents([{
-                    type: "change-location",
-                    newLocation: Locations[exit],
-                  }]));
+                if (canChangeLocations(location, exit)) {
+                  setCinematics(_ => [
+                    // NOTE: intentionally clear out array here to stop all existing cinematics
+                    {
+                      cinematic:
+                        runEvents([{
+                          type: "change-location",
+                          newLocation: Locations[exit],
+                        }]),
+                      status: "running",
+                    }
+                  ]);
                 }
               }
             })
@@ -97,15 +103,18 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
 
         break;
       }
+
       case "Inventory": {
         actionText = "You reach into your bag.";
 
         let items = [];
+
         for (const item of Keys(inventory)) {
           if (inventory[item] === true) {
             items.push(item);
           }
         }
+
         if (items.length === 0) {
           nextDialog = { type: "describe", text: "There's nothing in there." };
         } else {
@@ -113,12 +122,14 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
 
           for (const item of items) {
             const text = `> Use ${item}`;
+
             nextDialog.options.push({ text: text, onClick: () => { } })
           }
         }
 
         break;
       }
+
       case "Talk": {
         actionText = "You check who's nearby.";
 
@@ -131,17 +142,34 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
             const dialog = person.dialog;
             const text = `> Talk to ${person.name.toLowerCase()}`;
 
-            nextDialog.options.push({ text: text, onClick: () => { cinematicState.runCinematic(runEvents(dialog)) } })
+            nextDialog.options.push({
+              text: text, onClick: () => {
+                setCinematics(prev => [
+                  // NOTE: intentionally clear out array here to stop all existing cinematics
+                  {
+                    cinematic: runEvents(dialog),
+                    status: "running",
+                  }
+                ]);
+              }
+            })
           }
         }
+
         break;
       }
     }
 
     const event: DescribeEvent = { type: "describe", text: actionText, nextDialog };
 
-    cinematicState.runCinematic(runEvents([event]));
-  }, [cinematicState.cinematics.length, location.name]);
+    setCinematics(prev => [
+      ...prev,
+      {
+        cinematic: runEvents([event]),
+        status: "running",
+      }
+    ]);
+  }, [location.name, JSON.stringify(inventory)]);
 
   // TODO: This (setting width:160) is a hacky way of aligning divs pixel-perfectly,
   // might break stuff. 
@@ -162,6 +190,12 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
                 continue;
               }
 
+              if (event.type === "action") {
+                disabled = event.options.length > 0;
+
+                break;
+              }
+
               if (event.isContainingSequenceFinished) {
                 disabled = false;
                 break;
@@ -172,12 +206,8 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
                 break;
               }
 
-              if (event.type === "action") {
-                disabled = true;
-                break;
-              }
-
               disabled = false;
+
               break;
             }
 

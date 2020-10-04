@@ -1,13 +1,13 @@
 import React from 'react';
 import Portrait from './images/portrait.png';
-import { Location } from './CinematicTypes';
+import { Cinematic, Location } from './CinematicTypes';
 import { Locations } from './Data';
-import { CinematicState } from './App';
 import { runEvents } from './Cinematics';
+import { CinematicState } from './App';
 
-export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
+export const PortraitAndActions = ({ location, setCinematics }: {
   location: Location;
-  cinematicState: CinematicState;
+  setCinematics: React.Dispatch<React.SetStateAction<CinematicState[]>>;
 }) => {
   const [openMenu, setOpenMenu] = React.useState<number | null>(null);
 
@@ -38,12 +38,17 @@ export const PortraitAndActions = ({ location, cinematicState: runCinematic }: {
         return (<div style={containerStyle}>
           {location.exits.map((p) => {
             return <button onClick={() => {
-              runCinematic.runCinematic(runEvents([{
-                type: "change-location",
-                newLocation: Locations[p],
-              }
-              ]
-              ))
+              setCinematics(prev => [
+                ...prev,
+                {
+                  cinematic:
+                    runEvents([{
+                      type: "change-location",
+                      newLocation: Locations[p],
+                    }]),
+                  status: "running",
+                }
+              ]);
             }} style={childStyle}>{p}</button>
           })}
         </div>

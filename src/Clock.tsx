@@ -30,7 +30,7 @@ export const Clock = ({ dateString, timeString }: {
 }) => {
   return (<div style={{ width: 150 }}>
     <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>{timeString}</div>
-    <div style={{ backgroundColor: "white", border: '1px solid black', borderTop: "none", alignSelf: "flex-end", width: 80 }}>{dateString}</div>
+    <div style={{ backgroundColor: "white", border: '1px solid black', borderTop: "none", alignSelf: "flex-end", width: 80, textAlign: "right" }}>{dateString}</div>
   </div>
   )
 }

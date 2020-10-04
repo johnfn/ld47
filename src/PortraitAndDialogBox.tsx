@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActionEvent, CinematicEvent, PromptEvent, PromptSelectionKeys, DialogEvent } from './CinematicTypes';
+import { PromptEvent, PromptSelectionKeys, DialogEvent, Cinematic } from './CinematicTypes';
 import { Dialog } from './Dialog'
 import { Actions, Describe } from './PlayerActions';
 import Portrait from './images/portrait2.png';
@@ -27,11 +27,10 @@ const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
   )
 };
 
-
-export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, cinematicState, inventory }: {
+export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setCinematics, inventory }: {
   events: DisplayedEvent[];
   location: Location;
-  cinematicState: CinematicState;
+  setCinematics: React.Dispatch<React.SetStateAction<CinematicState[]>>;
   markActionAsTaken: (id: string) => void;
   inventory: Inventory;
 }) => {
@@ -156,7 +155,12 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, cine
           }
         </div>
 
-        <PlayerActions events={events} inventory={inventory} cinematicState={cinematicState} location={location} />
+        <PlayerActions
+          events={events}
+          inventory={inventory}
+          setCinematics={setCinematics}
+          location={location}
+        />
       </div>
     </div >);
 }
