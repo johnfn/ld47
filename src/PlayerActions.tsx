@@ -162,6 +162,11 @@ export const PlayerActions = ({ events, inventory, location, cinematicState }: {
                 continue;
               }
 
+              if (event.isFinished) {
+                disabled = false;
+                break;
+              }
+
               if (event.type === "describe") {
                 disabled = true;
                 break;

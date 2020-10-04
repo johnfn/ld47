@@ -29,7 +29,7 @@ export function* runSpeakEvent(event: DialogEvent | BackgroundDialogEvent, props
 
   const { speaker, text } = event;
   const id = generateId();
-  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id };
+  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id, isFinished: false };
 
   actions.setEvents(oldEvents => {
     return [...oldEvents, dialogResult];
@@ -106,6 +106,8 @@ export function* runEvents(events: CinematicEvent[]): Cinematic {
       yield* runSpeakEvent(event, { background: true })
     } else if (event.type === "inventory") {
       yield* addToInventory(event.item);
+    } else if (event.type === "describe") {
+      yield* runDescribeEvent(event);
     }
   }
 }
@@ -119,6 +121,7 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
     type: "prompt",
     id,
     time: actions.timeString,
+    isFinished: false,
   };
 
   actions.setEvents(oldActions => {
@@ -172,15 +175,12 @@ export function* runPromptEvent(promptEvent: PromptEvent): Cinematic {
   yield* runEvents(selectedOption.nextDialog);
 }
 
-
-// TODO: Prevent user from launching the same Describe event 5 million times?
-// TODO: Make old describe event actions unclickable, since the state has changed.
 export function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
   let actions = yield "next";
 
   const timeString = actions.timeString;
   const id = generateId();
-  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id };
+  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id, isFinished: false, };
 
   actions.setEvents(oldEvents => {
     return [...oldEvents, newEvent];
@@ -203,6 +203,16 @@ export function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
     actions = yield "next";
   }
 
+  newEvent.text = describeEvent.text;
+
+  actions.setEvents(oldEvents => {
+    const newEvents = [...oldEvents];
+    const indexToUpdate = newEvents.findIndex(event => event.id === id);
+
+    newEvents[indexToUpdate] = newEvent;
+    return newEvents;
+  });
+
   if (describeEvent.nextDialog) {
     yield* runEvents([describeEvent.nextDialog]);
   }
@@ -216,6 +226,7 @@ export function* runActionEvent(actionEvent: ActionEvent): Cinematic {
       ...actionEvent,
       id: generateId(),
       hasTakenAction: false,
+      isFinished: false,
     },
   ]);
 }

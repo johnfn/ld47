@@ -14,14 +14,15 @@ export type CinematicState = {
   cinematics: Cinematic[];
 }
 
-export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; }
-export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; };
-export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; };
-export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; };
+export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isFinished: boolean; }
+export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isFinished: boolean; };
+export type DisplayedPrompt = { options: PromptOption[]; id: string; type: "prompt"; time: string; isFinished: boolean; };
+export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isFinished: boolean; };
 export type DisplayedAction = {
   type: "action";
   options: { text: string; onClick?: () => void; }[]; id: string;
   hasTakenAction: boolean;
+  isFinished: boolean;
 };
 
 export type InventoryItem = "key" | "book";
@@ -90,6 +91,12 @@ const App = () => {
       });
 
       if (result.done) {
+        setEvents(events => {
+          const newEvents = [...events];
+
+          newEvents[newEvents.length - 1].isFinished = true;
+          return newEvents;
+        })
         return null;
       }
 
