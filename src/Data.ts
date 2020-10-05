@@ -17,7 +17,7 @@ export type Person =
   | 'Shady Guy'
   | 'Past Scramble'
 
-enum Checkpoints {
+export enum Checkpoints {
   'Game Start',
   'Doctor Scramble',
   'Canadian French',
@@ -28,6 +28,7 @@ enum Checkpoints {
 
 export let Checkpoint: Checkpoints = Checkpoints["Game Start"];
 export function* setCheckpoint(newCheckpoint: Checkpoints): Cinematic { Checkpoint = newCheckpoint; yield "next" };
+export function setCheckpointNoYield(newCheckpoint: Checkpoints) { Checkpoint = newCheckpoint; };
 
 const Bar: Location = {
   name: 'Bar',
@@ -128,9 +129,11 @@ const Alleyway: Location = {
             yield* narrate("My god... it's the sky.");
             yield* narrate("And here I thought I was going to die with that weird doctor guy.");
           } else {
-            if (oneInTen()){
+            if (oneInTen()) {
               yield* narrate("Look! A cool bird!");
-            } else yield* narrate("Yep... It's the sky.");
+            } else {
+              yield* narrate("Yep... It's the sky.");
+            }
           }
         },
         type: "thing",
@@ -144,7 +147,6 @@ const Alleyway: Location = {
         },
         type: "thing",
       },
-
     ]
   },
   exits: ["Bar", "Outdoors"],
@@ -241,7 +243,7 @@ function* enterAlleyway(): Cinematic {
     } else {
       yield* narrate("It's the alley you appeared in.");
     }
-    
+
   }
   if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     if (hasntSeenEnterAlleyway) {
@@ -269,7 +271,7 @@ function* enterAlleyway(): Cinematic {
 }
 
 export function* describeHQ(): Cinematic {
-  if (Checkpoint === Checkpoints["Game Start"]){
+  if (Checkpoint === Checkpoints["Game Start"]) {
     yield* talk("Vega", "Here I am! The workplace is busy this morning.");
     yield* talk("Vega", "Looks like Captain Sharp wants to talk to me. I can talk with him with the [Interact] button.");
   } else {
@@ -322,7 +324,7 @@ function* enterOutside(): Cinematic {
 
 let isGameOver = false;
 
-function* enterDarkBG(): Cinematic {
+export function* enterDarkBG(): Cinematic {
   yield* setInterruptable(false);
 
   if (Checkpoint === Checkpoints["Game Start"]) {
@@ -343,16 +345,16 @@ function* enterDarkBG(): Cinematic {
     yield* talk("Vega", "... Yeah. No such luck. I guess we’re doing this.");
     yield* talk("Vega", "Might as well head to work to confront Doctor Scramble again, I guess.");
     yield* setInterruptable(true);
-    
+
   } if (Checkpoint === Checkpoints["Time Travel"]) {
     yield* talk("Vega", "Goood morning world. Here we go again.");
     yield* setInterruptable(true);
-    
+
   } if (Checkpoint === Checkpoints["Time Ray"]) {
     yield* talk("Vega", "...I’m awake. That’s good.");
     yield* talk("Vega", "And I remember... time theory. And engineering. Wait, my time ray! Do I have my time ray?");
     yield* narrate("Your inventory contains one TIME RAY.");
-    yield* talk("Vega", "Yes! I came through! ...but there’s one more thing I need to do before I use this."); 
+    yield* talk("Vega", "Yes! I came through! ...but there’s one more thing I need to do before I use this.");
 
   } if (Checkpoint === Checkpoints["Game Over"]) {
     yield* talk("Vega", "Am... Am I alive?");
@@ -373,7 +375,7 @@ function* enterDarkBG(): Cinematic {
 
   }
 
-  if (isGameOver = false){
+  if (!isGameOver) {
     yield* setMode("DreamSequence");
     yield* dreamTalk("DAY 1");
     yield* dreamTalk("");
@@ -381,27 +383,27 @@ function* enterDarkBG(): Cinematic {
     yield* dreamTalk("");
     yield* dreamTalk("NATIONAL AGENCY FOR CONTAINMENT OF THREATS HEADQUARTERS (NATCH)");
     yield* setMode("Future");
-  
+
     yield* setLocation(Locations.HQ);
   }
 }
 
-function* enterHouse(): Cinematic{
-  if (canEnterHouse = false) {
+function* enterHouse(): Cinematic {
+  if (canEnterHouse === false) {
     yield* setLocation(Locations.Outdoors);
   } else {
-    if (Checkpoint === Checkpoints["Game Start"]){
+    if (Checkpoint === Checkpoints["Game Start"]) {
       yield* speakToPV02();
-  
-    } if (Checkpoint === Checkpoints["Doctor Scramble"]){
+
+    } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
       yield* speakToPV12();
-      
-    } if (Checkpoint === Checkpoints["Canadian French"]){
+
+    } if (Checkpoint === Checkpoints["Canadian French"]) {
       yield* speaktoPV22();
-      
-    } if (Checkpoint === Checkpoints["Time Travel"]){
+
+    } if (Checkpoint === Checkpoints["Time Travel"]) {
       yield* speakToPV31();
-    } 
+    }
   }
 }
 
@@ -496,7 +498,7 @@ function* speakToBartender(): Cinematic {
 let talkedToPastScramble = false;
 
 function* speakToShadyGuy(): Cinematic {
-  if (Checkpoint === Checkpoints["Canadian French"]){
+  if (Checkpoint === Checkpoints["Canadian French"]) {
     yield* talk("Shady Guy", "Whaddaya want, eh?");
     const result = yield* prompt([
       "Say hello",
@@ -509,7 +511,7 @@ function* speakToShadyGuy(): Cinematic {
     }
 
     if (result === 1) {
-      if (talkedToPastScramble = false){
+      if (talkedToPastScramble = false) {
         yield* talk("Vega", "Le chat scintille de lait de castor. ");
         yield* talk("Shady Guy", "Ah, tres bien. What may I do for you, camarade? ");
         yield* talk("Vega", "Oh! Um, I would like to speak to Scramble, please. ");
@@ -544,9 +546,9 @@ function* speakToShadyGuy(): Cinematic {
         yield* talk("Vega", "Le chat scintille de lait de castor. ");
         yield* talk("Shady Guy", "Ah, I am afraid that Monsieur Scramble is busy. Please return at a later time.");
       }
-      
+
     }
-    
+
   } else {
     yield* talk("Shady Guy", "Whaddaya want, eh?");
     const result = yield* prompt([
@@ -568,11 +570,11 @@ function* speakToShadyGuy(): Cinematic {
 }
 
 function* speakToSeedyGuy(): Cinematic {
-  if (Checkpoint === Checkpoints["Doctor Scramble"]){
+  if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     yield* talk("Seedy Guy", "Oh, were you looking for speedy guy? I'm SEEDY guy.");
     yield* talk("Seedy Guy", "Speedy guy's out back, I think. Maybe. Every time I go check, he's already gone.");
   }
-  if (Checkpoint === Checkpoints["Canadian French"]){
+  if (Checkpoint === Checkpoints["Canadian French"]) {
     yield* talk("Seedy Guy", "...French? Naw, iunno any o' that stuff.");
     yield* talk("Seedy Guy", "I'm just here for the booze, ya dig?");
   } else {
@@ -599,53 +601,53 @@ function* emptyCinematic(): Cinematic {
 }
 
 function* speakToCaptainSharp(): Cinematic {
-  if (Checkpoint === Checkpoints["Game Start"]){
+  if (Checkpoint === Checkpoints["Game Start"]) {
     yield* speakToCaptainSharp01();
-  } if (Checkpoint === Checkpoints["Doctor Scramble"]){
+  } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     yield* speakToCaptainSharp11();
-  } if (Checkpoint === Checkpoints["Canadian French"]){
+  } if (Checkpoint === Checkpoints["Canadian French"]) {
     yield* speakToCaptainSharp21();
-  } if (Checkpoint === Checkpoints["Time Travel"]){
+  } if (Checkpoint === Checkpoints["Time Travel"]) {
     yield* speakToCaptainSharp31();
-  } if (Checkpoint === Checkpoints["Time Ray"]){
+  } if (Checkpoint === Checkpoints["Time Ray"]) {
     yield* speakToCaptainSharp41();
   }
 }
 
 function* talkToHouse(): Cinematic {
-  if (Checkpoint === Checkpoints["Game Start"]){
+  if (Checkpoint === Checkpoints["Game Start"]) {
     yield* speakToPV01();
-  } if (Checkpoint === Checkpoints["Doctor Scramble"]){
+  } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     yield* speakToPV11();
-  } if (Checkpoint === Checkpoints["Canadian French"]){
+  } if (Checkpoint === Checkpoints["Canadian French"]) {
     yield* speakToPV21();
-  } if (Checkpoint === Checkpoints["Time Travel"]){
+  } if (Checkpoint === Checkpoints["Time Travel"]) {
     yield* speakToPV31();
   }
 }
 
 function* talkToBusker(): Cinematic {
-  if (Checkpoint === Checkpoints["Game Start"]){
+  if (Checkpoint === Checkpoints["Game Start"]) {
     yield* narrate("You head over to listen to what the busker is playing.");
     yield* narrate("It's an intriguing melody with both octave and semitonal movement.");
     yield* narrate("You toss him a coin and see his face light up.");
-  } if (Checkpoint === Checkpoints["Doctor Scramble"]){
+  } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     yield* narrate("You head over to listen to what the busker is playing.");
     yield* narrate("The melody makes you feel just like an overload.");
     yield* narrate("You toss him a coin and he texts you some digital love.");
-  } if (Checkpoint === Checkpoints["Canadian French"]){
+  } if (Checkpoint === Checkpoints["Canadian French"]) {
     yield* narrate("You head over to listen to what the busker is playing.");
     yield* narrate("His song makes you feel like part of your heart is somewhere else.");
     yield* narrate("You non-violently toss him a coin and he does a one-man kickline.");
-  } if (Checkpoint === Checkpoints["Time Travel"]){
+  } if (Checkpoint === Checkpoints["Time Travel"]) {
     yield* narrate("You head over to listen to what the busker is playing.");
     yield* narrate("The melody is going uuuup and downnnn and uuuup and downnnn.");
     yield* narrate("You toss him a coin because of the good way he uses a sound we all know and love.");
   }
 }
 
-function* oneInTen() {
-  Math.random() < 0.1;
+function oneInTen() {
+  return (Math.random() < 0.1);
 }
 
 
@@ -692,7 +694,7 @@ function* speakToCaptainSharp01(): Cinematic {
   yield* talk("Vega", "N O O O O O O O O ", ["slow"]);
   yield* narrate("ZAP!");
   yield* talk("Captain Sharp", "Wha... VEGA! NO! WHY DID YOU DO THAT ");
-  yield* talk("Vega", "It’s okay... I’m happy to take a bullet for my captain... "); 
+  yield* talk("Vega", "It’s okay... I’m happy to take a bullet for my captain... ");
   yield* talk("Captain Sharp", "Vega... ");
   yield* talk("Captain Sharp", "That wasn’t a bullet. ");
   yield* talk("Doctor Scramble", "IT SURE WASN’T! ");
@@ -878,7 +880,7 @@ function* speakToPV11(): Cinematic {
   yield* talk("Past Vega", "Whoa, you ARE me from the future!!!");
   yield* talk("Vega", "Glad we got there in the end. Can I come in? We have a lot to talk about. ");
   yield* talk("Past Vega", "Yeah, sure. I mean, it’s pretty empty because I’m moving out, but you know that already. I mean, wow! I have so many questions. But you know that already too! This is so cool. Come, come! ");
-  yield* talk("Vega", "Hoo boy. ");  
+  yield* talk("Vega", "Hoo boy. ");
 
   canEnterHouse = true;
 }
@@ -964,7 +966,7 @@ export function* thrownInPastForThirdTime(): Cinematic {
 }
 
 function* speakToPV21(): Cinematic {
-  if (talkedToPastScramble = false){
+  if (talkedToPastScramble === false) {
     yield* talk("Vega", "Hmm, I should probably go check out the Canadian mafia at the Royal Skillet bar first. Wouldn’t want to drag past me into this dirty business—she’s already so... fragile.");
   } else {
     yield* talk("Vega", "Well, here we go again.");
@@ -980,12 +982,11 @@ function* speakToPV21(): Cinematic {
   }
 }
 
-function* speaktoPV22(): Cinematic{
+function* speaktoPV22(): Cinematic {
   yield* talk("Vega", "...so, to make a long story short, this isn’t my first time on this rodeo bull. The other versions of you that I mentioned earlier have helped me get here, and I’m finally close to figuring out a way to getting out of this loop, which will then allow me to take down Doctor Scramble... I assume. Any questions?");
   yield* talk("Past Vega", "This is... SO COOL!! So, what did you learn from the Scramble in my time? Anything I can help with?");
 
   while (true) {
-
     const result = yield* prompt([
       "Inferiority complex",
       "Likes martinis",
@@ -1109,7 +1110,7 @@ function* speakToPV31(): Cinematic {
 //
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function* speakToCaptainSharp41(): Cinematic{
+function* speakToCaptainSharp41(): Cinematic {
   yield* talk("Captain Sharp", "Hey, Vega!");
   yield* talk("Vega", "Captain.");
   yield* talk("Captain Sharp", "Uhh, hey. Why do you have a gun? You know you don’t have clearance for firearms in the headquarters yet.");
@@ -1144,7 +1145,7 @@ function* speakToCaptainSharp41(): Cinematic{
     // TODO: if you do nothing for 15 seconds, the game literally resets maybe
   ]);
 
-  if (result === 0){
+  if (result === 0) {
     yield* talk("Vega", "You know, Scramble, I think I’ve finally figured you out.");
     yield* talk("Doctor Scramble", "Chff. Doubt it.");
     yield* talk("Vega", "I think you’re scared, Scramble. I think that all this song-and-dance you do is just an overly flamboyant display of power that, deep down, you fear that you lack on the inside.");
@@ -1158,8 +1159,8 @@ function* speakToCaptainSharp41(): Cinematic{
     yield* narrate("Captain Sharp SHOVES you.");
     yield* narrate("The ray of light hits SCRAMBLE’S BUTTON.");
     yield* narrate("A PULSE OF LIGHT emanates from the BUTTON. Everyone is KNOCKED OUT.");
-  } 
-  if (result === 1){
+  }
+  if (result === 1) {
     yield* talk("Vega", "You know, Scramble, I think I’ve finally figured you out.");
     yield* talk("Doctor Scramble", "Chff. Doubt it.");
     yield* talk("Vega", "I think there’s one thing that you like more than anything else in the world, and that’s the illusion of control. That’s why you manipulate people. That’s why you put them into situations where you think you’re the only one who fully knows what’s going on.");
@@ -1227,7 +1228,7 @@ export function* startDreamSequence(): Cinematic {
     canEnterHouse = true;
     hasntSeenEnterAlleyway = true;
   }
-  if (Checkpoint === Checkpoints["Time Travel"]){
+  if (Checkpoint === Checkpoints["Time Travel"]) {
     yield* talk("Vega", "I believe in you!!!");
     // TODO: Vega fades
     yield* talk("Past Vega", "Dammit! I was going to ask her to help me move in.");
@@ -1238,6 +1239,7 @@ export function* startDreamSequence(): Cinematic {
     yield* setMode("Future");
     yield* setCheckpoint(Checkpoints["Time Ray"]);
     yield* setLocation(Locations.DarkBG);
+
     canEnterHouse = false;
     hasntSeenEnterAlleyway = true;
   }

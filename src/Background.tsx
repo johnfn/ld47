@@ -6,7 +6,7 @@ const locationFiles: { [K in LocationNames]: string } = {
   'Bar': 'ld47 bar',
   'Outdoors': 'city2',
   'Alleyway': 'alley2',
-  'DarkBG': 'ld47 bar',
+  'DarkBG': 'darkbg',
   'HQ': 'ld47 science',
   'House': 'ld47 house',
 }

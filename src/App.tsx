@@ -5,7 +5,7 @@ import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
 import { Keyboard } from './Keyboard';
 import { Cinematic, GameMode, Location } from './CinematicTypes';
-import { Locations, Person, startGame, thrownInPastForFirstTime } from './Data';
+import { Checkpoints, enterDarkBG, Locations, Person, setCheckpointNoYield, startDreamSequence, startGame, thrownInPastForFirstTime } from './Data';
 import { Overlay } from './Overlay';
 import { FutureDate, TextModifier } from './Cinematics';
 import { Background } from './Background';
@@ -101,9 +101,20 @@ const App = () => {
     Debug = true;
 
     if (whichCinematic === 0) {
+      setCheckpointNoYield(Checkpoints["Game Start"]);
       cinematicToRun = startGame();
     } else if (whichCinematic === 1) {
-      cinematicToRun = thrownInPastForFirstTime()
+      setCheckpointNoYield(Checkpoints["Doctor Scramble"]);
+      cinematicToRun = enterDarkBG();
+    } else if (whichCinematic === 2) {
+      setCheckpointNoYield(Checkpoints["Canadian French"]);
+      cinematicToRun = enterDarkBG();
+    } else if (whichCinematic === 3) {
+      setCheckpointNoYield(Checkpoints["Time Travel"]);
+      cinematicToRun = enterDarkBG();
+    } else if (whichCinematic === 4) {
+      setCheckpointNoYield(Checkpoints["Time Ray"]);
+      cinematicToRun = enterDarkBG();
     } else {
       cinematicToRun = startGame();
       Debug = false;

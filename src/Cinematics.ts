@@ -474,7 +474,7 @@ export function* showNearbyInteractors(location: Location): Cinematic {
   const interactors = location.interactors();
 
   if (interactors.length === 0) {
-    yield* narrate("There doesn't seem to be anything around. AT ALL.");
+    yield* narrate("There doesn't seem to be anything around to interact with.");
 
     return;
   }

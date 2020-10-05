@@ -3,12 +3,14 @@ import { Person } from './Data';
 
 const portraitFiles: { [K in Person]: string } = {
   'Bartender': "portrait",
-  'Guy 2': "portrait2",
   'Doctor Scramble': "portrait2",
   '???': "portrait2",
   'Vega': "portrait",
   'Captain Sharp': "portrait2",
   'Narrator': "portrait2",
+  'Seedy Guy': "portrait2",
+  'Shady Guy': "portrait2",
+  'Past Scramble': "portrait2",
 
   // these are all the same.
   'Other Vega': "portrait2",
