@@ -116,17 +116,21 @@ export const Dialog = ({ event: { speaker, text, time, type }, showTimestamp, co
 
 export const Prompt: React.FC<{ prompt: PromptEvent, color: HSL }> = ({ prompt, color }) => {
   const { h, s, l } = color;
+  const [hovered, setHovered] = React.useState<number | null>(null);
 
   return (
     <div style={{ color: `hsl(${h}, ${s}%, ${l}%)` }}>
       {
         prompt.options.map((option, i) =>
-          <div style={{ display: 'flex' }}>
+          <div
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            style={{ display: 'flex', padding: '8px 0' }}>
             <div style={{ flex: '0 0 20px' }}>
               {PromptSelectionKeys[i]}:
             </div>
 
-            <div style={{ flex: '1 0 0' }}>
+            <div style={{ flex: '1 0 0', color: hovered === i ? "black" : "inherit" }}>
               {option}
             </div>
           </div>
