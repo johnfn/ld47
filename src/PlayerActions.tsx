@@ -1,6 +1,6 @@
 import React from 'react';
 import { CinematicState, DisplayedEvent, Inventory, InventoryItem } from './App';
-import { runEvents, setMode } from './Cinematics';
+import { explore, runEvents, setMode } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location, Cinematic } from './CinematicTypes';
 import { dreamSequence1, LocationNames, Locations } from './Data';
 import { Keys } from './Utils';
@@ -18,7 +18,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
     return currentLocation.exits.includes(nextLocation);
   };
 
-  const onClickActionItem = React.useCallback((action: string, i: number) => {
+  const onClickActionItem = /* React.useCallback( */ (action: string, i: number) => {
     let actionText = "";
     let nextDialog: CinematicEvent = { type: "describe", text: "" };
 
@@ -26,39 +26,13 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
 
     switch (action) {
       case "Explore": {
-        actionText = "You look around.";
+        setCinematics(_ => [{
+          // NOTE: intentionally clear out array here to stop all existing cinematics
+          cinematic: explore(location),
+          status: "running",
+        }]);
 
-        if (location.exits.length === 0) {
-          // lol
-          nextDialog = { type: "describe", text: "This room doesn't have any doors. Strange; how did you get here?" };
-        } else {
-          nextDialog = { type: "action", options: [] };
-
-          for (const exit of location.exits) {
-            const text = exit === "Outdoors" ? `> Go ${exit.toLowerCase()}` : `> Go to ${exit.toLowerCase()}`;
-
-            nextDialog.options.push({
-              text: text,
-              onClick: () => {
-                if (canChangeLocations(location, exit)) {
-                  setCinematics(_ => [
-                    // NOTE: intentionally clear out array here to stop all existing cinematics
-                    {
-                      cinematic:
-                        runEvents([{
-                          type: "change-location",
-                          newLocation: Locations[exit],
-                        }]),
-                      status: "running",
-                    }
-                  ]);
-                }
-              }
-            })
-          }
-        }
-
-        break;
+        return;
       }
 
       case "Inventory": {
@@ -132,14 +106,19 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
 
     const event: DescribeEvent = { type: "describe", text: actionText, nextDialog };
 
-    setCinematics(prev => [
-      ...prev,
-      {
-        cinematic: runEvents([event]),
-        status: "running",
-      }
-    ]);
-  }, [location.name, JSON.stringify(inventory), events.length]);
+    setCinematics(prev => {
+      console.log('add event', event, 'should be number', prev.length + 1);
+
+      return [
+        ...prev,
+        {
+          cinematic: runEvents([event]),
+          status: "running",
+        }
+      ]
+    });
+  }
+  // }, [location.name, JSON.stringify(inventory), events.length]);
 
   // TODO: This (setting width:160) is a hacky way of aligning divs pixel-perfectly,
   // might break stuff. 
@@ -173,6 +152,8 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
           {
             location.actions.map((action, i) => {
               let disabled = false;
+
+              debugger;
 
               for (const event of events.slice().reverse()) {
                 if (event.type === "background-dialog") {

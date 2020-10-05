@@ -193,7 +193,7 @@ function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
     text: "",
     id,
     isContainingSequenceFinished: false,
-    state: "animating"
+    state: "animating",
   };
 
   addEvent(actions.setEvents, newEvent);
@@ -394,4 +394,23 @@ export function* setMode(newMode: GameMode): Cinematic {
 export function* setFutureHasChanged(): Cinematic {
   const actions = yield 'next';
   actions.setFutureHasChanged(true);
+}
+
+
+export function* explore(location: Location): Cinematic {
+  yield* setInterruptable(false);
+  yield* narrate("You look around");
+  yield* setInterruptable(true);
+
+  const exits = location.exits;
+
+  if (exits.length === 0) {
+    yield* narrate("This room doesn't have any doors. Strange; how did you get here?");
+  } else {
+    const result = yield* prompt(
+      exits.map(exit => exit.toLowerCase() === "outdoors" ? "Go outdoors" : "Go to " + exit)
+    );
+
+    yield* setLocation(Locations[exits[result]]);
+  }
 }
