@@ -1,63 +1,18 @@
 import React from 'react';
-import { CinematicState, DisplayedAction, DisplayedDescribe, DisplayedEvent, Inventory, InventoryItem } from './App';
-import { runEvents } from './Cinematics';
+import { CinematicState, DisplayedEvent, Inventory, InventoryItem } from './App';
+import { runEvents, setMode } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location, Cinematic } from './CinematicTypes';
-import { LocationNames, Locations } from './Data';
+import { dreamSequence1, LocationNames, Locations } from './Data';
 import { Keys } from './Utils';
 
-export const Actions = ({ event, onClick }: {
-  event: DisplayedAction;
-  onClick: (id: string) => void;
-}) => {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-      {
-        event.options.map(o =>
-          <button
-            disabled={event.hasTakenAction}
-            onClick={() => { onClick(event.id); o.onClick && o.onClick(); }}
-            style={{ border: "none" }}
-          >
-            {o.text}
-          </button>
-        )
-      }
-    </div>
-  );
-}
-
-export const Describe = ({ event }: { event: DisplayedDescribe }) => {
-  // TODO: Merge this with Dialog?
-  // TODO: get showTimestamp prop
-  const [isHovered, setIsHovered] = React.useState(false);
-
-  return (
-    <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        marginBottom: 12,
-        marginTop: 12,
-        backgroundColor: isHovered ? '#f9f9f9' : '#fff',
-        color: "black",
-      }}
-    >
-      <div
-        style={{ display: 'flex', justifyContent: "space-between" }}
-      >
-        <div style={{ flex: '1 0 0' }}>NARRATOR</div>
-        <div style={{ flex: '1 0 0', color: 'lightgray', textAlign: "right" }}>{isHovered && event.time}</div>
-      </div>
-      <div style={{ marginLeft: 10 }}>{event.text}</div>
-    </div>);
-}
-
-
-export const PlayerActions = ({ events, inventory, location, setCinematics }: {
+export const PlayerActions = ({ events, inventory, location, setCinematics, allowInterruptions, futureHasChanged, markActionAsTaken }: {
   events: DisplayedEvent[],
   location: Location,
   setCinematics: React.Dispatch<React.SetStateAction<CinematicState[]>>;
   inventory: Inventory,
+  allowInterruptions: boolean,
+  futureHasChanged: boolean,
+  markActionAsTaken: (id: string) => void
 }) => {
   const canChangeLocations = (currentLocation: Location, nextLocation: LocationNames) => {
     return currentLocation.exits.includes(nextLocation);
@@ -66,6 +21,9 @@ export const PlayerActions = ({ events, inventory, location, setCinematics }: {
   const onClickActionItem = React.useCallback((action: string, i: number) => {
     let actionText = "";
     let nextDialog: CinematicEvent = { type: "describe", text: "" };
+
+    console.log(events);
+    markActionAsTaken(events[events.length - 1].id)
 
     switch (action) {
       case "Explore": {
@@ -122,8 +80,21 @@ export const PlayerActions = ({ events, inventory, location, setCinematics }: {
 
           for (const item of items) {
             const text = `> Use ${item}`;
-
-            nextDialog.options.push({ text: text, onClick: () => { } })
+            nextDialog.options.push({
+              text: text, onClick: () => {
+                setCinematics(_ => [
+                  // NOTE: intentionally clear out array here to stop all existing cinematics
+                  {
+                    cinematic:
+                      runEvents([{
+                        type: "describe",
+                        text: "Nothing happens. Hmmm... Maybe you can try a little harder next time?"
+                      }]),
+                    status: "running",
+                  }
+                ]);
+              }
+            })
           }
         }
 
@@ -134,7 +105,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics }: {
         actionText = "You check who's nearby.";
 
         if (location.people.length === 0) {
-          nextDialog = { type: "describe", text: "There doesn't seem to be anyone around." }
+          nextDialog = { type: "describe", text: "There doesn't seem to be anyone around. Spooky." }
         } else {
           nextDialog = { type: "action", options: [] }
 
@@ -174,53 +145,82 @@ export const PlayerActions = ({ events, inventory, location, setCinematics }: {
   // TODO: This (setting width:160) is a hacky way of aligning divs pixel-perfectly,
   // might break stuff. 
 
+  const onClickFutureButton = () => {
+    setCinematics(_ => [
+      // NOTE: intentionally clear out array here to stop all existing cinematics
+      {
+        cinematic:
+          dreamSequence1(),
+        status: "running",
+      }
+    ]);
+  }
+
   return (
-    <div style={{ display: "flex", justifyContent: "center" }}>
-      <div style={{ width: 160 }}>
-        {
-          location.actions.map((action, i) => {
-            let disabled = false;
+    <div>
+      {futureHasChanged &&
+        <div style={{ border: "1px solid black", padding: "6px 10px", }}>
+          <div>The future has changed. Suddenly, you feel a force pulling you away...</div>
+          <button
+            style={{
+              margin: "auto", padding: "0px 4px 2px", marginTop: 4
+            }}
+            onClick={onClickFutureButton}>Give in</button>
+        </div>
+      }
+      <div style={{ display: "flex", justifyContent: "center" }}>
 
-            for (const event of events.slice().reverse()) {
-              if (event.type === "background-dialog") {
-                continue;
-              }
+        <div style={{ width: 160 }}>
+          {
+            location.actions.map((action, i) => {
+              let disabled = false;
 
-              if (event.type === "action") {
-                disabled = event.options.length > 0;
+              for (const event of events.slice().reverse()) {
+                if (event.type === "background-dialog") {
+                  continue;
+                }
 
-                break;
-              }
+                if (event.type === "action") {
+                  // I dont get what this does
+                  //disabled = event.options.length > 0; 
 
-              if (event.isContainingSequenceFinished) {
+                  disabled = event.hasTakenAction;
+                  break;
+                }
+
+                if (event.isContainingSequenceFinished) {
+                  disabled = false;
+                  break;
+                }
+
+                if (event.type === "describe") {
+                  disabled = true;
+                  break;
+                }
+
                 disabled = false;
                 break;
               }
 
-              if (event.type === "describe") {
+              if (!allowInterruptions) {
                 disabled = true;
-                break;
               }
 
-              disabled = false;
+              return (
+                <>
+                  <button
+                    onClick={() => { onClickActionItem(action, i) }}
+                    disabled={disabled}
+                    style={{ border: "none", margin: 2 }}>
+                    {action}
+                  </button>
 
-              break;
-            }
-
-            return (
-              <>
-                <button
-                  onClick={() => { onClickActionItem(action, i) }}
-                  disabled={disabled}
-                  style={{ border: "none", margin: 2 }}>
-                  {action}
-                </button>
-
-                <span> {i !== location.actions.length - 1 ? " | " : null}</span>
-              </>
-            );
-          })
-        }
+                  <span> {i !== location.actions.length - 1 ? " | " : null}</span>
+                </>
+              );
+            })
+          }
+        </div>
       </div>
     </div>
   )

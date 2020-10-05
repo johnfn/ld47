@@ -1,7 +1,12 @@
 import { DisplayedEvent, Inventory } from "./App";
-import { LocationNames as LocationName } from "./Data";
+import { LocationNames as LocationName, Person } from "./Data";
 
 export type CinematicEvent = DialogEvent | PromptEvent | ActionEvent | DescribeEvent | BackgroundDialog | InventoryEvent | ChangeLocationEvent;
+
+export type GameMode =
+  | 'Future'
+  | 'Past'
+  | 'DreamSequence'
 
 export type ActionType =
   | 'Talk'
@@ -9,7 +14,7 @@ export type ActionType =
   | 'Inventory'
 
 export type DialogEvent = {
-  speaker: string;
+  speaker: Person;
   text: string;
   nextDialog?: CinematicEvent[];
   type: "dialog"
@@ -32,9 +37,14 @@ export type DescribeEvent = {
 };
 
 export type BackgroundDialog = {
-  speaker: string;
+  speaker: Person;
   text: string;
   type: "background-dialog";
+};
+
+export type DreamDialog = {
+  text: string;
+  type: "dream-dialog";
 };
 
 export type InventoryEvent = {
@@ -59,12 +69,12 @@ export type LiveEvent = {
 export type Location = {
   description: Cinematic;
   name: LocationName;
-  people: { name: string, dialog: Cinematic }[];
+  people: { name: Person, dialog: Cinematic }[];
   exits: LocationName[];
   actions: ActionType[];
   liveEvents: {
     time: string;
-    event: BackgroundDialog;
+    event: Cinematic;
   }[];
 }
 
@@ -82,6 +92,20 @@ export type CinematicArgs = {
 
   setInventory: React.Dispatch<React.SetStateAction<Inventory>>;
   inventory: Inventory;
+
+  setMode: React.Dispatch<React.SetStateAction<GameMode>>;
+  mode: GameMode;
+
+  setOverlayOpacity: React.Dispatch<React.SetStateAction<number>>;
+  overlayOpacity: number;
+
+  setInterruptable: React.Dispatch<React.SetStateAction<boolean>>;
+  interruptable: boolean;
+
+  setCurrentDate: React.Dispatch<React.SetStateAction<Date>>;
+
+  setFutureHasChanged: React.Dispatch<React.SetStateAction<boolean>>;
+  futureHasChanged: boolean;
 };
 
 export type Cinematic<T = void> = Generator<"next", T, CinematicArgs>;

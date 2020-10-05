@@ -1,30 +1,44 @@
 import React, { useEffect } from 'react';
 import useInterval from './ use_interval';
 import Background from './images/img_placeholder.png';
-import { Clock, useClock } from './Clock';
+import { Clock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
-import { displayText, runEvents } from './Cinematics';
 import { Keyboard } from './Keyboard';
-import { Cinematic, Location } from './CinematicTypes';
-import { Locations, startGame } from './Data';
+import { Cinematic, GameMode, Location } from './CinematicTypes';
+import { Locations, Person, startGame } from './Data';
+import { Overlay } from './Overlay';
+import { FutureDate } from './Cinematics';
 
 export type DisplayedEventState =
   | "animating"
   | "waiting-for-key"
   | "done"
+  ;
 
-export type DisplayedDialog = { speaker: string; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; }
-export type DisplayedBackgroundDialog = { speaker: string; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
+export type DisplayedDialog = { speaker: Person; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; }
+export type DisplayedDreamDialog = { text: string; id: string; type: "dream-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; }
+export type DisplayedBackgroundDialog = { speaker: Person; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedPrompt = { options: string[]; id: string; type: "prompt"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedAction = {
   type: "action";
-  options: { text: string; onClick?: () => void; }[]; id: string;
+  options: { text: string; onClick?: () => void; }[];
+  id: string;
   hasTakenAction: boolean;
   isContainingSequenceFinished: boolean;
   state: DisplayedEventState;
 };
+
+export type DisplayedEvent =
+  | DisplayedDialog
+  | DisplayedPrompt
+  | DisplayedBackgroundDialog
+  | DisplayedDescribe
+  | DisplayedAction
+  | DisplayedDreamDialog
+  ;
+
 
 export type InventoryItem = "key" | "book";
 export type Inventory = { [K in InventoryItem]: boolean };
@@ -34,21 +48,29 @@ export type CinematicState = {
   status: "running" | "paused";
 }
 
-export type DisplayedEvent =
-  | DisplayedDialog
-  | DisplayedPrompt
-  | DisplayedBackgroundDialog
-  | DisplayedDescribe
-  | DisplayedAction
-  ;
-
 const App = () => {
   const [events, setEvents] = React.useState<DisplayedEvent[]>([]);
   const [inventory, setInventory] = React.useState<Inventory>({ key: false, book: false })
   const [activeLocation, setActiveLocation] = React.useState<Location>(Locations.Bar);
-  const { dateString, timeString } = useClock();
   const [cinematics, setCinematics] = React.useState<CinematicState[]>([]);
   const [triggeredLiveEvents, setTriggeredLiveEvents] = React.useState<{ [key: string]: boolean }>({});
+  const [mode, setMode] = React.useState<GameMode>("Future");
+  const [overlayOpacity, setOverlayOpacity] = React.useState(0);
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const [currentDate, setCurrentDate] = React.useState(FutureDate);
+  const [timeString, setTimeString] = React.useState("");
+  const [dateString, setDateString] = React.useState("");
+  const [interruptable, setInterruptable] = React.useState(false);
+  const [futureHasChanged, setFutureHasChanged] = React.useState<boolean>(false);
+
+  useInterval(() => {
+    setCurrentDate(prevDate => {
+      prevDate.setMilliseconds(currentDate.getMilliseconds() + 10 * 50);
+      return prevDate;
+    });
+    setTimeString(`${currentDate.toLocaleTimeString().split(" ")[0].slice(0, -3)} ${currentDate.toLocaleTimeString().split(" ")[1]}`);
+    setDateString(`${currentDate.toLocaleDateString("en-US", options).split(",")[1]}`);
+  }, 50);
 
   useEffect(() => {
     setCinematics([
@@ -78,6 +100,15 @@ const App = () => {
         timeString,
         inventory,
         setInventory,
+        mode,
+        setMode,
+        overlayOpacity,
+        setOverlayOpacity,
+        setCurrentDate,
+        interruptable,
+        setInterruptable,
+        setFutureHasChanged,
+        futureHasChanged
       });
 
       if (result.done) {
@@ -101,7 +132,7 @@ const App = () => {
       if (!triggeredLiveEvents[eventKey] && liveEvent.time.toLowerCase() === timeString.toLowerCase()) {
         setCinematics(prev => [
           ...prev,
-          { cinematic: runEvents([liveEvent.event]), status: "running" },
+          { cinematic: liveEvent.event, status: "running" },
         ]);
         setTriggeredLiveEvents({
           ...triggeredLiveEvents,
@@ -115,6 +146,11 @@ const App = () => {
     <div style={{
       padding: '8px',
     }}>
+      <Overlay
+        opacity={overlayOpacity}
+        displayedEvents={events}
+      />
+
       <div style={{
         display: 'flex',
         justifyContent: "space-between",
@@ -125,8 +161,16 @@ const App = () => {
         backgroundSize: '100%',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', }}>
-          <Clock dateString={dateString} timeString={timeString} />
-          <PortraitAndActions setCinematics={setCinematics} location={activeLocation} />
+          <Clock
+            dateString={dateString}
+            timeString={timeString}
+            mode={mode}
+          />
+
+          <PortraitAndActions
+            setCinematics={setCinematics}
+            location={activeLocation}
+          />
         </div>
 
         <PortraitAndDialogBox
@@ -134,6 +178,7 @@ const App = () => {
           events={events}
           location={activeLocation}
           setCinematics={setCinematics}
+          allowInterruptions={interruptable}
           markActionAsTaken={(id) => {
             setEvents(prevEvents => {
               const newEvents = [...prevEvents];
@@ -148,12 +193,13 @@ const App = () => {
 
                 newEvents[index] = newEvent;
               } else {
-                alert("Error: tried to update action but it wasnt an action");
+                //alert("Error: tried to update action but it wasnt an action");
               }
 
               return newEvents;
             })
           }}
+          futureHasChanged={futureHasChanged}
         />
       </div>
     </div>

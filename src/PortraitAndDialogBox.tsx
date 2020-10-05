@@ -1,38 +1,20 @@
 import React from 'react';
 import { PromptEvent, PromptSelectionKeys, DialogEvent, Cinematic } from './CinematicTypes';
-import { Dialog } from './Dialog'
-import { Actions, Describe } from './PlayerActions';
+import { Actions, Describe, Dialog, DialogComponent, maxDialogsToDisplay, Prompt } from './Dialog';
 import Portrait from './images/portrait2.png';
 import { PlayerActions } from './PlayerActions';
 import { Location } from './CinematicTypes';
 import { CinematicState, DisplayedEvent, Inventory } from './App';
 
-const Prompt: React.FC<{ prompt: PromptEvent }> = ({ prompt }) => {
-  return (
-    <div>
-      {
-        prompt.options.map((option, i) =>
-          <div style={{ display: 'flex' }}>
-            <div style={{ flex: '0 0 20px' }}>
-              <strong>{PromptSelectionKeys[i]}</strong>:
-            </div>
 
-            <div style={{ flex: '1 0 0' }}>
-              {option}
-            </div>
-          </div>
-        )
-      }
-    </div>
-  )
-};
-
-export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setCinematics, inventory }: {
+export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setCinematics, inventory, allowInterruptions, futureHasChanged }: {
   events: DisplayedEvent[];
   location: Location;
   setCinematics: React.Dispatch<React.SetStateAction<CinematicState[]>>;
+  allowInterruptions: boolean;
   markActionAsTaken: (id: string) => void;
   inventory: Inventory;
+  futureHasChanged: boolean;
 }) => {
   const speakingEvents: DialogEvent[] = [];
   const promptEvents: PromptEvent[] = [];
@@ -73,6 +55,10 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
     break;
   }
 
+  let mostRecentDreamDialogIndex = events.map(event => event.type === "dream-dialog").lastIndexOf(true);
+  let prevEvent: DisplayedEvent | null = null;
+  let prevSpeaker: string | null = null;
+
   return (
     <div style={{ display: 'flex', flex: '0 0 400px' }}>
       <div
@@ -102,40 +88,54 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
           }}
         >
           {
-            events.map(event => {
+            events.slice(events.length - maxDialogsToDisplay).map((event, i) => {
+              let showTimestamp = false;
+              let speaker = 'speaker' in event ? event.speaker : "narrator";
               let result: React.ReactNode;
 
-              if (event.type === "dialog" || event.type === "background-dialog") {
-                let showTimestamp = false;
-
-                if (lastTimeString === null) {
-                  showTimestamp = true;
-                } else {
-                  const prevTime = (lastTimeString.split(" ")[0]).split(":").map(x => Number(x));
-                  const nowTime = (event.time.split(" ")[0]).split(":").map(x => Number(x));
-
-                  const prevTimeMinutes = prevTime[0] * 60 + prevTime[1];
-                  const nowTimeMinutes = nowTime[0] * 60 + nowTime[1];
-
-                  if (nowTimeMinutes - prevTimeMinutes > 10) {
+              if (event.type === "dream-dialog") {
+                if (prevEvent?.type !== "dream-dialog") {
+                  result = (
+                    <div>
+                      <hr style={{ border: '1px solid #ececec' }} />
+                    </div>
+                  );
+                }
+              } else {
+                if (event.type === "dialog" || event.type === "background-dialog") {
+                  if (lastTimeString === null) {
                     showTimestamp = true;
+                  } else {
+                    const prevTime = (lastTimeString.split(" ")[0]).split(":").map(x => Number(x));
+                    const nowTime = (event.time.split(" ")[0]).split(":").map(x => Number(x));
+
+                    const prevTimeMinutes = prevTime[0] * 60 + prevTime[1];
+                    const nowTimeMinutes = nowTime[0] * 60 + nowTime[1];
+
+                    if (nowTimeMinutes - prevTimeMinutes > 10) {
+                      showTimestamp = true;
+                    }
                   }
+
+                  lastTimeString = event.time;
                 }
 
-                result = <Dialog event={event} showTimestamp={showTimestamp} />
-                lastTimeString = event.time;
-              } else if (event.type === "prompt") {
-                result = <Prompt prompt={event} />;
-              } else if (event.type === "action") {
-                result = <Actions
+                const happenedInPast = (i < mostRecentDreamDialogIndex);
+
+                // NOTE: Index is backwards. The last element in the list (i = events.length - 1)
+                // is passed in as index = 0. This is for div text color calculation only.
+                result = <DialogComponent
                   event={event}
-                  onClick={(id: string) => { markActionAsTaken(id) }}
+                  markActionAsTaken={markActionAsTaken}
+                  index={events.length - i - 1}
+                  showTimestamp={showTimestamp}
+                  happenedInPast={happenedInPast}
+                  showSpeaker={speaker !== prevSpeaker}
                 />
-              } else if (event.type === "describe") {
-                result = <Describe event={event} />
-              } else {
-                alert("unhandled event type");
               }
+
+              prevEvent = event;
+              prevSpeaker = speaker;
 
               return result;
             })
@@ -155,12 +155,14 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
             </div>
           }
         </div>
-
         <PlayerActions
           events={events}
+          allowInterruptions={allowInterruptions}
           inventory={inventory}
           setCinematics={setCinematics}
           location={location}
+          futureHasChanged={futureHasChanged}
+          markActionAsTaken={markActionAsTaken}
         />
       </div>
     </div >);

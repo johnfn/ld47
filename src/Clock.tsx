@@ -1,36 +1,48 @@
 import React from 'react';
-import { useInterval } from './ use_interval';
-
-export const useClock = (): { dateString: string, timeString: string } => {
-  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-
-  const [currentDate, setCurrentDate] = React.useState(new Date(Date.parse('14 April 2012 10:00:00 PST')));
-  const [timeString, setTimeString] = React.useState("");
-  const [dateString, setDateString] = React.useState("");
-
-  useInterval(() => {
-    setCurrentDate(prevDate => {
-      prevDate.setMilliseconds(currentDate.getMilliseconds() + 10 * 50);
-      return prevDate;
-    })
-    setTimeString(`${currentDate.toLocaleTimeString().split(" ")[0].slice(0, -3)} ${currentDate.toLocaleTimeString().split(" ")[1]}`);
-    setDateString(`${currentDate.toLocaleDateString("en-US", options).split(",")[1]}`);
-  }, 50);
-
-  return {
-    timeString,
-    dateString,
-  };
-};
+import { GameMode } from './CinematicTypes';
 
 // TODO: MAKE THIS GODDAMN CLOCK PIXEL PERFECT RARRHFHFJF
-export const Clock = ({ dateString, timeString }: {
+export const Clock = ({ dateString, timeString, mode }: {
   timeString: string;
   dateString: string;
+  mode: GameMode;
 }) => {
-  return (<div style={{ width: 150 }}>
-    <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>{timeString}</div>
-    <div style={{ backgroundColor: "white", border: '1px solid black', borderTop: "none", alignSelf: "flex-end", width: 80, textAlign: "right" }}>{dateString}</div>
-  </div>
-  )
+  if (mode === "Past") {
+    return (
+      <div style={{ width: 150 }}>
+        <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>
+          {timeString}
+        </div>
+        <div style={{ backgroundColor: "white", border: '1px solid black', borderTop: "none", alignSelf: "flex-end", width: 80, textAlign: "right" }}>
+          {dateString}
+        </div>
+      </div>
+    );
+  } else if (mode === "Future") {
+    return (
+      <div style={{ width: 150 }}>
+        <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>
+          broken lol :-)
+        </div>
+        <div style={{ backgroundColor: "white", border: '1px solid black', borderTop: "none", alignSelf: "flex-end", width: 80, textAlign: "right" }}>
+          .
+        </div>
+      </div>
+    );
+  } else if (mode === "DreamSequence") {
+    return (
+      <div style={{ width: 150 }}>
+        <div style={{ backgroundColor: "white", border: '1px solid black', height: 50, fontSize: 36, paddingLeft: 12 }}>
+          ???
+        </div>
+        <div style={{ backgroundColor: "white", border: '1px solid black', borderTop: "none", alignSelf: "flex-end", width: 80, textAlign: "right" }}>
+          ???, ???
+        </div>
+      </div>
+    );
+  } else {
+    alert('unknown game mode in clock');
+
+    return null;
+  }
 }

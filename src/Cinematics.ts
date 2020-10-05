@@ -1,6 +1,6 @@
-import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedEvent, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
-import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptSelectionKeys, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent, Location } from "./CinematicTypes";
-import { Locations } from "./Data";
+import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedDreamDialog, DisplayedEvent, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
+import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptSelectionKeys, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent, Location, GameMode, DreamDialog } from "./CinematicTypes";
+import { Locations, Person } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 
 let lastUsedId = 0;
@@ -48,14 +48,20 @@ function updateEvent(setEvents: (value: React.SetStateAction<DisplayedEvent[]>) 
   });
 }
 
-function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { background?: boolean } = { background: false }): Cinematic {
+function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent | DreamDialog, props: { background?: boolean } = { background: false }): Cinematic {
   const { background } = props;
   let actions = yield "next";
   const timeString = actions.timeString;
 
-  const { speaker, text } = event;
+  const { text } = event;
   const id = generateId();
-  const dialogResult: DisplayedDialog | DisplayedBackgroundDialog = { speaker, text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating" };
+  let dialogResult: DisplayedDialog | DisplayedBackgroundDialog | DisplayedDreamDialog;
+
+  if (event.type === "dialog" || event.type === "background-dialog") {
+    dialogResult = { speaker: event.speaker, text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating" };
+  } else {
+    dialogResult = { text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating" };
+  }
 
   addEvent(actions.setEvents, dialogResult);
 
@@ -75,7 +81,7 @@ function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent, props: { ba
 
   updateEvent(actions.setEvents, dialogResult);
 
-  if (!background) {
+  if (!background && text !== "") {
     yield* waitForKey("Spacebar");
   }
 
@@ -181,7 +187,14 @@ function* runDescribeEvent(describeEvent: DescribeEvent): Cinematic {
 
   const timeString = actions.timeString;
   const id = generateId();
-  const newEvent: DisplayedDescribe = { ...describeEvent, time: timeString, text: "", id, isContainingSequenceFinished: false, state: "animating" };
+  const newEvent: DisplayedDescribe = {
+    ...describeEvent,
+    time: timeString,
+    text: "",
+    id,
+    isContainingSequenceFinished: false,
+    state: "animating"
+  };
 
   addEvent(actions.setEvents, newEvent);
 
@@ -262,23 +275,48 @@ function* addToInventory(item: keyof Inventory): Cinematic {
   actions.setInventory({ ...actions.inventory, [item]: true })
 
   const titledCasedItem = item.charAt(0).toUpperCase() + item.slice(1)
-  const getEvent: DialogEvent = { type: "dialog", speaker: "narrator", text: `${titledCasedItem} was added to your inventory.` }
+  const getEvent: DialogEvent = { type: "dialog", speaker: "Narrator", text: `${titledCasedItem} was added to your inventory.` }
 
   yield* runDialogEvent(getEvent, { background: false });
 }
 
 // exported
 
-export function* talk(speaker: string, text: string): Cinematic {
+export function* talk(speaker: Person, text: string): Cinematic {
   yield* runDialogEvent({
     speaker, text, type: "dialog"
   })
 }
 
+export function* dreamTalk(text: string): Cinematic {
+  yield* runDialogEvent({
+    text, type: "dream-dialog"
+  })
+}
+
+
+export function* talkInBackground(speaker: Person, text: string): Cinematic {
+  yield* runDialogEvent({
+    speaker, text, type: "background-dialog",
+  }, { background: true })
+}
+
+export function* narrateInBackground(text: string): Cinematic {
+  yield* runDialogEvent({
+    speaker: "Narrator", text, type: "background-dialog",
+  }, { background: true })
+}
+
 export function* narrate(text: string): Cinematic {
   yield* runDialogEvent({
-    speaker: "narrator", text, type: "dialog"
+    speaker: "Narrator", text, type: "dialog"
   })
+}
+
+export function* setInterruptable(value: boolean): Cinematic {
+  const actions = yield 'next';
+
+  actions.setInterruptable(value);
 }
 
 export function* setLocation(newLocation: Location): Cinematic {
@@ -297,4 +335,63 @@ export function* prompt(options: string[]): Cinematic<number> {
 
 export function* giveItem(item: keyof Inventory): Cinematic {
   yield* addToInventory(item)
+}
+
+export const PastDate = new Date(Date.parse('14 April 2012 10:00:00 PST'))
+export const FutureDate = new Date(Date.parse('8 December 2012 10:00:00 PST'))
+
+export function* setMode(newMode: GameMode): Cinematic {
+  const actions = yield 'next';
+  const prevMode = actions.mode;
+
+  if (newMode === "Past") {
+    actions.setFutureHasChanged(false);
+  }
+
+  if (prevMode === "DreamSequence") {
+    if (newMode === "Past") {
+      actions.setCurrentDate(PastDate);
+    }
+
+    if (newMode === "Future") {
+      actions.setCurrentDate(FutureDate);
+    }
+  }
+
+  // Fade to black
+  if (prevMode !== newMode && newMode === "DreamSequence") {
+    actions.setMode(newMode);
+
+    for (let i = 0; i < 50; i++) {
+      actions.setOverlayOpacity((i + 1) / 50);
+
+      yield 'next';
+    }
+  }
+
+  // Fade from black
+  if (prevMode !== newMode && prevMode === "DreamSequence") {
+    actions.setMode(newMode);
+
+    for (let i = 0; i < 50; i++) {
+      actions.setOverlayOpacity(1 - (i + 1) / 50);
+
+      yield 'next';
+    }
+  }
+
+  if (prevMode !== "DreamSequence") {
+    if (newMode === "Past") {
+      actions.setCurrentDate(PastDate);
+    }
+
+    if (newMode === "Future") {
+      actions.setCurrentDate(FutureDate);
+    }
+  }
+}
+
+export function* setFutureHasChanged(): Cinematic {
+  const actions = yield 'next';
+  actions.setFutureHasChanged(true);
 }
