@@ -9,10 +9,13 @@ const portraitFiles: { [K in Person]: string } = {
   'Vega': "portrait",
   'Captain Sharp': "portrait2",
   'Narrator': "portrait2",
+
+  // these are all the same.
+  'Other Vega': "portrait2",
   'Past Vega': "portrait2",
   'Voice from inside': "portrait2",
-  'Both Vegas': "portrait2",
 
+  'Both Vegas': "portrait2",
 }
 export const Portrait = ({ person, speaking }: { person: Person, speaking: boolean }) => {
   const path = `./images/${portraitFiles[person]}.png`;

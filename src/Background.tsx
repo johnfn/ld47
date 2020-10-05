@@ -2,13 +2,13 @@ import React, { useEffect } from 'react';
 import { AllLocations, Cinematic, GameMode, Location } from './CinematicTypes';
 import { LocationNames } from './Data';
 
-
 const locationFiles: { [K in LocationNames]: string } = {
   'Bar': 'ld47 bar',
-  'Outdoors': 'ld47 bar',
-  'Alleyway': 'ld47 house',
+  'Outdoors': 'city2',
+  'Alleyway': 'alley2',
   'DarkBG': 'ld47 bar',
-  'HQ0': 'ld47 science',
+  'HQ': 'ld47 science',
+  'FamiliarHouse': 'ld47 house',
 }
 
 export const Background = ({ location }: { location: Location }) => {

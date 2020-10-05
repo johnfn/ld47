@@ -75,7 +75,6 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
   let prevEvent: DisplayedEvent | null = null;
   let prevSpeaker: Person | null = null;
 
-
   return (
     <div style={{ display: 'flex', flex: '0 0 400px' }}>
       {(lastSpeaker && lastSpeaker != "Vega") ?
@@ -90,8 +89,8 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
         flexDirection: "column",
         justifyContent: "space-between",
         padding: "20px 18px 20px 20px",
-        marginLeft: 20,
-        width: 220,
+        transform: 'translateX(60px)',
+        width: 300,
         backgroundColor: "white",
         border: '1px solid black',
       }}>

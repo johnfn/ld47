@@ -25,7 +25,7 @@ export const PortraitAndActions = ({ location, setCinematics }: {
 
         return (
           <div style={containerStyle}>
-            {location.interactors.map((p) => {
+            {location.interactors().map((p) => {
               return <button style={childStyle}>{p}</button>
             })}
           </div>

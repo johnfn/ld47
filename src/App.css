@@ -1,10 +1,10 @@
 @font-face {
-  font-family: 'PixelPlay';
-  src: url('./fonts/pixelplay.woff') format('woff');
+  font-family: 'FiraSans';
+  src: url('./fonts/FiraSans-Light.otf') format('opentype');
 }
 
 * {
-  font-family: 'PixelPlay';
+  font-family: 'FiraSans';
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
      -khtml-user-select: none; /* Konqueror HTML */

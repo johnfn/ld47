@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import './App.css';
-import './fonts/pixelplay.ttf';
+import './fonts/FiraSans-Light.otf';
 
 ReactDOM.render(
   <React.StrictMode>

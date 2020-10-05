@@ -2,7 +2,7 @@ import React from 'react';
 import { CinematicState, DisplayedEvent, Inventory, InventoryItem } from './App';
 import { explore, runEvents, setMode, showInventory, showNearbyInteractors } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location, Cinematic } from './CinematicTypes';
-import { dreamSequence1, LocationNames, Locations } from './Data';
+import { startDreamSequence, Locations, LocationNames } from './Data';
 import { Keys } from './Utils';
 
 export const PlayerActions = ({ events, inventory, location, setCinematics, allowInterruptions, futureHasChanged, markActionAsTaken }: {
@@ -42,7 +42,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
         break;
       }
 
-      case "Talk": {
+      case "Interact": {
         setCinematics(_ => [{
           // NOTE: intentionally clear out array here to stop all existing cinematics
           cinematic: showNearbyInteractors(location),
@@ -63,7 +63,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
       // NOTE: intentionally clear out array here to stop all existing cinematics
       {
         cinematic:
-          dreamSequence1(),
+          startDreamSequence(),
         status: "running",
       }
     ]);
@@ -122,7 +122,12 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
               return (
                 <>
                   <button
-                    onClick={() => { onClickActionItem(action, i) }}
+                    onClick={event => {
+                      onClickActionItem(action, i);
+                    }}
+                    onFocus={e => {
+                      e.currentTarget.blur();
+                    }}
                     disabled={disabled}
                     style={{ border: "none", margin: 1 }}>
                     {action}

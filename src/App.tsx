@@ -42,7 +42,15 @@ export type DisplayedEvent =
   | DisplayedDreamDialog
   ;
 
-export type InventoryItem = "key" | "book";
+export type InventoryItem =
+  | "key"
+  | "book"
+  | "root beer"
+  | "dunkin donuts coffee"
+  | "strawberry frilly thing"
+  | "IOU for one cobb salad"
+  | "barbecue sauce"
+  ;
 export type Inventory = { [K in InventoryItem]: boolean };
 
 export type CinematicState = {
@@ -50,9 +58,19 @@ export type CinematicState = {
   status: "running" | "paused";
 }
 
+export let Debug = false;
+
 const App = () => {
   const [events, setEvents] = React.useState<DisplayedEvent[]>([]);
-  const [inventory, setInventory] = React.useState<Inventory>({ key: false, book: false })
+  const [inventory, setInventory] = React.useState<Inventory>({
+    key: false,
+    book: false,
+    "root beer": false,
+    "IOU for one cobb salad": false,
+    "dunkin donuts coffee": false,
+    "strawberry frilly thing": false,
+    "barbecue sauce": false,
+  });
   const [activeLocation, setActiveLocation] = React.useState<Location>(Locations.Bar);
   const [cinematics, setCinematics] = React.useState<CinematicState[]>([]);
   const [triggeredLiveEvents, setTriggeredLiveEvents] = React.useState<{ [key: string]: boolean }>({});
@@ -80,12 +98,15 @@ const App = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const whichCinematic = Number(urlParams.get("cinematic"));
 
+    Debug = true;
+
     if (whichCinematic === 0) {
       cinematicToRun = startGame();
     } else if (whichCinematic === 1) {
       cinematicToRun = thrownInPastForFirstTime()
     } else {
       cinematicToRun = startGame();
+      Debug = false;
     }
 
     setCinematics([
@@ -160,6 +181,7 @@ const App = () => {
   return (
     <div style={{
       padding: '8px',
+      fontSize: 18,
     }}>
       <Overlay
         opacity={overlayOpacity}

@@ -445,10 +445,6 @@ export function* explore(location: Location): Cinematic {
 }
 
 export function* showInventory(inventory: Inventory): Cinematic {
-  yield* setInterruptable(false);
-  yield* narrate("You reach into your bag.");
-  yield* setInterruptable(true);
-
   const items = Keys(inventory).filter(item => inventory[item]);
 
   if (items.length === 0) {
@@ -459,18 +455,23 @@ export function* showInventory(inventory: Inventory): Cinematic {
 
   const itemPrompts = items.map(item => `Use ${item}`);
   const selection = yield* prompt(itemPrompts);
+  const item = items[selection];
 
-  yield* narrate("Nothing happens. Hmmm... Maybe you can try a little harder next time?");
-
-  // TODO: Stop all other cinematics
+  if (item === "IOU for one cobb salad") {
+    yield* narrate("It's an IOU for a cobb salad. You're not sure what to do with it, though.");
+  } else if (item === "barbecue sauce") {
+    yield* narrate("This is barbecue sauce. Somehow that still surprises you.");
+  } else if (item === "dunkin donuts coffee") {
+    yield* narrate("Mmm. Coffee. Amazing.");
+  } else if (item === "root beer") {
+    yield* narrate("It's root beer you got from the Royal Skillet.");
+  } else if (item === "strawberry frilly thing") {
+    yield* narrate("It's a pile of frills in a cup.");
+  }
 }
 
 export function* showNearbyInteractors(location: Location): Cinematic {
-  yield* setInterruptable(false);
-  yield* narrate("You check who's nearby.");
-  yield* setInterruptable(true);
-
-  const interactors = location.interactors;
+  const interactors = location.interactors();
 
   if (interactors.length === 0) {
     yield* narrate("There doesn't seem to be anything around. AT ALL.");
@@ -478,14 +479,14 @@ export function* showNearbyInteractors(location: Location): Cinematic {
     return;
   }
 
-  const talkingPrompts = interactors.map(interactor => {
+  const interactorPrompts = interactors.map(interactor => {
     if (interactor.type === "person") {
       return `Talk to ${interactor.name}`;
     } else {
-      return `Look at ${interactor.name}`;
+      return `Look at ${interactor.name.toLowerCase()}`;
     }
   });
-  const selection = yield* prompt(talkingPrompts);
+  const selection = yield* prompt(interactorPrompts);
 
-  yield* interactors[selection].dialog;
+  yield* interactors[selection].dialog();
 }
