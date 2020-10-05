@@ -14,10 +14,10 @@ const portraitFiles: { [K in Person]: string } = {
   'Both Vegas': "portrait2",
 
 }
-export const Portrait = ({person}: {person: Person}) => {
-const path = `./images/${portraitFiles[person]}.png`;
+export const Portrait = ({ person, speaking }: { person: Person, speaking: boolean }) => {
+  const path = `./images/${portraitFiles[person]}.png`;
 
-  return (<img draggable="false" style={{
+  return (<img className={speaking ? "speaker-active" : "speaker"} draggable="false" style={{
     width: 130,
     height: 180,
     border: '1px solid black'

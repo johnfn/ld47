@@ -49,8 +49,14 @@ function updateEvent(setEvents: (value: React.SetStateAction<DisplayedEvent[]>) 
   });
 }
 
-function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent | DreamDialog, props: { background?: boolean } = { background: false }): Cinematic {
-  const { background } = props;
+export type TextModifier =
+  | "slow"
+  | "huge"
+  | "shaky"
+  ;
+
+function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent | DreamDialog, props: { background?: boolean; modifier?: TextModifier[] } = { background: false }): Cinematic {
+  const { background, modifier } = props;
   let actions = yield "next";
   const timeString = actions.timeString;
 
@@ -59,9 +65,9 @@ function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent | DreamDialo
   let dialogResult: DisplayedDialog | DisplayedBackgroundDialog | DisplayedDreamDialog;
 
   if (event.type === "dialog" || event.type === "background-dialog") {
-    dialogResult = { speaker: event.speaker, text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating" };
+    dialogResult = { speaker: event.speaker, text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating", modifier };
   } else {
-    dialogResult = { text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating" };
+    dialogResult = { text: "", type: event.type, time: timeString, id, isContainingSequenceFinished: false, state: "animating", modifier };
   }
 
   addEvent(actions.setEvents, dialogResult);
@@ -72,6 +78,12 @@ function* runDialogEvent(event: DialogEvent | BackgroundDialogEvent | DreamDialo
 
     if (Keyboard.justDown.Spacebar) {
       break;
+    }
+
+    if (props.modifier?.includes("slow")) {
+      for (let i = 0; i < 5; i++) {
+        yield "next";
+      }
     }
 
     actions = yield "next";
@@ -296,10 +308,12 @@ function* addToInventory(item: keyof Inventory): Cinematic {
 
 // exported
 
-export function* talk(speaker: Person, text: string): Cinematic {
+export function* talk(speaker: Person, text: string, modifier?: TextModifier[]): Cinematic {
   yield* runDialogEvent({
-    speaker, text, type: "dialog"
-  })
+    speaker,
+    text,
+    type: "dialog",
+  }, { background: false, modifier })
 }
 
 export function* dreamTalk(text: string): Cinematic {
@@ -321,10 +335,10 @@ export function* narrateInBackground(text: string): Cinematic {
   }, { background: true })
 }
 
-export function* narrate(text: string): Cinematic {
+export function* narrate(text: string, modifier?: TextModifier[]): Cinematic {
   yield* runDialogEvent({
-    speaker: "Narrator", text, type: "dialog"
-  })
+    speaker: "Narrator", text, type: "dialog",
+  }, { modifier });
 }
 
 export function* setInterruptable(value: boolean): Cinematic {
@@ -451,21 +465,27 @@ export function* showInventory(inventory: Inventory): Cinematic {
   // TODO: Stop all other cinematics
 }
 
-export function* showNearbyPeople(location: Location): Cinematic {
+export function* showNearbyInteractors(location: Location): Cinematic {
   yield* setInterruptable(false);
   yield* narrate("You check who's nearby.");
   yield* setInterruptable(true);
 
-  const people = location.people;
+  const interactors = location.interactors;
 
-  if (people.length === 0) {
-    yield* narrate("There doesn't seem to be anyone around. Spooky.");
+  if (interactors.length === 0) {
+    yield* narrate("There doesn't seem to be anything around. AT ALL.");
 
     return;
   }
 
-  const talkingPrompts = people.map(person => `Talk to ${person.name}`);
+  const talkingPrompts = interactors.map(interactor => {
+    if (interactor.type === "person") {
+      return `Talk to ${interactor.name}`;
+    } else {
+      return `Look at ${interactor.name}`;
+    }
+  });
   const selection = yield* prompt(talkingPrompts);
 
-  yield* people[selection].dialog;
+  yield* interactors[selection].dialog;
 }

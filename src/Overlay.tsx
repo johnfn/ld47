@@ -1,5 +1,6 @@
-import React from 'react';
-import { DisplayedDreamDialog, DisplayedEvent } from './App';
+import React, { useEffect } from 'react';
+import useInterval from './ use_interval';
+import { APP_HEIGHT, APP_WIDTH, DisplayedDreamDialog, DisplayedEvent } from './App';
 
 export const Overlay: React.FC<{
   opacity: number;
@@ -10,8 +11,8 @@ export const Overlay: React.FC<{
   return (
     <div style={{
       position: "absolute",
-      width: 900,
-      height: 600,
+      width: APP_WIDTH,
+      height: APP_HEIGHT,
       margin: 40,
       backgroundColor: `rgba(0,0,0,1)`,
       opacity: String(opacity),
@@ -19,21 +20,25 @@ export const Overlay: React.FC<{
       pointerEvents: 'none',
     }}>
       <div style={{
-        padding: "30px 30px 30px 30px",
-        fontSize: 36,
+        border: "1px solid white",
+        margin: "75px auto",
+        padding: 30,
+        width: APP_WIDTH - 400,
+        height: APP_HEIGHT - 200,
+        fontSize: 24,
+
       }}>
         {dreamEvents.map(event => {
           return (
             <div style={{
               color: 'white',
-              textAlign: 'center',
               paddingTop: 12,
             }}>
-              { event.text}
+              {event.text}
             </div>
           );
         })}
       </div>
-    </div>
+    </div >
   );
 }

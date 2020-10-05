@@ -1,6 +1,7 @@
 import React from 'react';
+import useInterval from './ use_interval';
 import { DisplayedAction, DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedEvent } from './App';
-import { PromptEvent, PromptSelectionKeys, DialogEvent, Cinematic, BackgroundDialog } from './CinematicTypes';
+import { PromptEvent, PromptSelectionKeys } from './CinematicTypes';
 
 export const maxDialogsToDisplay = 60;
 
@@ -79,7 +80,7 @@ export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp
   return (<div></div>)
 }
 
-export const Dialog = ({ event: { speaker, text, time, type }, showTimestamp, color, showSpeaker }:
+export const Dialog = ({ event: { speaker, text, time, type, modifier }, showTimestamp, color, showSpeaker }:
   { event: DisplayedDialog | DisplayedBackgroundDialog; showTimestamp: boolean; color: HSL; showSpeaker: boolean }) => {
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -108,10 +109,42 @@ export const Dialog = ({ event: { speaker, text, time, type }, showTimestamp, co
         </div>
       }
 
-      <div style={{ marginLeft: 10 }}>{text}</div>
+      <div style={{
+        marginLeft: speaker === "Narrator" ? 0 : 10,
+        fontSize: modifier?.includes("huge") ? "48px" : "inherit",
+      }}>
+        {
+          modifier?.includes("shaky")
+            ? <ShakyText text={text} />
+            : text
+        }
+      </div>
     </div>
   );
 }
+
+const ShakyText: React.FC<{ text: string }> = ({ text }) => {
+  const [y, setY] = React.useState(0);
+
+  useInterval(() => {
+    if (y === -1) {
+      setY(1);
+    } else {
+      setY(-1);
+    }
+  }, 100);
+
+  return (
+    <div
+      style={{
+        transition: "0.1s all linear",
+        transform: `translateY(${y * 6}px)`,
+      }}
+    >
+      { text}
+    </div>
+  )
+};
 
 
 export const Prompt: React.FC<{ prompt: PromptEvent, color: HSL }> = ({ prompt, color }) => {

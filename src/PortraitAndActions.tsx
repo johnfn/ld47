@@ -18,14 +18,14 @@ export const PortraitAndActions = ({ location, setCinematics }: {
 
     const actionType = location.actions[i];
     switch (actionType) {
-      case "Talk": {
-        if (location.people.length === 0) {
-          return <div style={childStyle}>There is no one here.</div>
+      case "Interact": {
+        if (location.interactors.length === 0) {
+          return <div style={childStyle}>There is nothing here.</div>
         }
 
         return (
           <div style={containerStyle}>
-            {location.people.map((p) => {
+            {location.interactors.map((p) => {
               return <button style={childStyle}>{p}</button>
             })}
           </div>
@@ -76,9 +76,9 @@ export const PortraitAndActions = ({ location, setCinematics }: {
             return <div style={childStyle}>There is nothing in your inventory.</div>
           }
 
-          if (action === "Talk" && location.exits.length === 0) {
+          // if (action === "Talk" && location.exits.length === 0) {
 
-          }
+          // }
 
           return <div style={childStyle}>{action}</div>
         })
@@ -95,7 +95,7 @@ export const PortraitAndActions = ({ location, setCinematics }: {
   }
 
   return (<div style={{ display: "flex" }}>
-    <Portrait person={"Vega"} />
+    <Portrait person={"Vega"} speaking={false} />
     {/* <div style={{
       display: "flex",
       flexDirection: "row",

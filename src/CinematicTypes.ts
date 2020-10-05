@@ -9,9 +9,9 @@ export type GameMode =
   | 'DreamSequence'
 
 export type ActionType =
-  | 'Talk'
-  | 'Explore'
   | 'Inventory'
+  | 'Explore'
+  | 'Interact'
 
 export type DialogEvent = {
   speaker: Person;
@@ -69,7 +69,11 @@ export type LiveEvent = {
 export type Location = {
   description: Cinematic;
   name: LocationName;
-  people: { name: Person, dialog: Cinematic }[];
+  interactors: {
+    name: Person;
+    dialog: Cinematic;
+    type: "person" | "thing";
+  }[];
   exits: LocationName[];
   actions: ActionType[];
   liveEvents: {

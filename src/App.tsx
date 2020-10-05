@@ -1,24 +1,27 @@
 import React, { useEffect } from 'react';
 import useInterval from './ use_interval';
-import Background from './images/img_placeholder.png';
 import { Clock } from './Clock';
 import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
 import { Keyboard } from './Keyboard';
 import { Cinematic, GameMode, Location } from './CinematicTypes';
-import { Locations, Person, startGame } from './Data';
+import { Locations, Person, startGame, thrownInPastForFirstTime } from './Data';
 import { Overlay } from './Overlay';
-import { FutureDate } from './Cinematics';
+import { FutureDate, TextModifier } from './Cinematics';
+import { Background } from './Background';
 
+
+export const APP_WIDTH = 1100;
+export const APP_HEIGHT = 600;
 export type DisplayedEventState =
   | "animating"
   | "waiting-for-key"
   | "done"
   ;
 
-export type DisplayedDialog = { speaker: Person; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; }
-export type DisplayedDreamDialog = { text: string; id: string; type: "dream-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; }
-export type DisplayedBackgroundDialog = { speaker: Person; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
+export type DisplayedDialog = { speaker: Person; text: string; id: string; type: "dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; modifier?: TextModifier[] }
+export type DisplayedDreamDialog = { text: string; id: string; type: "dream-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; modifier?: TextModifier[] }
+export type DisplayedBackgroundDialog = { speaker: Person; text: string; id: string; type: "background-dialog"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; modifier?: TextModifier[] };
 export type DisplayedPrompt = { options: string[]; id: string; type: "prompt"; time: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedDescribe = { time: string; text: string; type: "describe"; id: string; isContainingSequenceFinished: boolean; state: DisplayedEventState; };
 export type DisplayedAction = {
@@ -38,7 +41,6 @@ export type DisplayedEvent =
   | DisplayedAction
   | DisplayedDreamDialog
   ;
-
 
 export type InventoryItem = "key" | "book";
 export type Inventory = { [K in InventoryItem]: boolean };
@@ -60,7 +62,7 @@ const App = () => {
   const [currentDate, setCurrentDate] = React.useState(FutureDate);
   const [timeString, setTimeString] = React.useState("");
   const [dateString, setDateString] = React.useState("");
-  const [interruptable, setInterruptable] = React.useState(false);
+  const [interruptable, setInterruptable] = React.useState(true);
   const [futureHasChanged, setFutureHasChanged] = React.useState<boolean>(false);
 
   useInterval(() => {
@@ -73,9 +75,22 @@ const App = () => {
   }, 50);
 
   useEffect(() => {
+    let cinematicToRun: Cinematic;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const whichCinematic = Number(urlParams.get("cinematic"));
+
+    if (whichCinematic === 0) {
+      cinematicToRun = startGame();
+    } else if (whichCinematic === 1) {
+      cinematicToRun = thrownInPastForFirstTime()
+    } else {
+      cinematicToRun = startGame();
+    }
+
     setCinematics([
       {
-        cinematic: startGame(),
+        cinematic: cinematicToRun,
         status: "running",
       },
     ])
@@ -154,12 +169,13 @@ const App = () => {
       <div style={{
         display: 'flex',
         justifyContent: "space-between",
-        width: 900,
-        height: 600,
+        backgroundImage: 'url(images/ld47 bar.png)',
+        width: APP_WIDTH,
+        height: APP_HEIGHT,
         margin: 40,
-        backgroundImage: `url("${Background}")`,
         backgroundSize: '100%',
       }}>
+        <Background location={activeLocation} />
         <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'column', }}>
           <Clock
             dateString={dateString}

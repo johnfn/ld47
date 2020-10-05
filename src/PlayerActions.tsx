@@ -1,6 +1,6 @@
 import React from 'react';
 import { CinematicState, DisplayedEvent, Inventory, InventoryItem } from './App';
-import { explore, runEvents, setMode, showInventory, showNearbyPeople } from './Cinematics';
+import { explore, runEvents, setMode, showInventory, showNearbyInteractors } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location, Cinematic } from './CinematicTypes';
 import { dreamSequence1, LocationNames, Locations } from './Data';
 import { Keys } from './Utils';
@@ -19,9 +19,6 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
   };
 
   const onClickActionItem = /* React.useCallback( */ (action: string, i: number) => {
-    let actionText = "";
-    let nextDialog: CinematicEvent = { type: "describe", text: "" };
-
     markActionAsTaken(events[events.length - 1].id);
 
     switch (action) {
@@ -48,7 +45,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
       case "Talk": {
         setCinematics(_ => [{
           // NOTE: intentionally clear out array here to stop all existing cinematics
-          cinematic: showNearbyPeople(location),
+          cinematic: showNearbyInteractors(location),
           status: "running",
         }]);
 
@@ -86,12 +83,10 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
       }
       <div style={{ display: "flex", justifyContent: "center" }}>
 
-        <div style={{ width: 160 }}>
+        <div style={{ width: 200 }}>
           {
             location.actions.map((action, i) => {
               let disabled = false;
-
-              debugger;
 
               for (const event of events.slice().reverse()) {
                 if (event.type === "background-dialog") {
@@ -129,7 +124,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
                   <button
                     onClick={() => { onClickActionItem(action, i) }}
                     disabled={disabled}
-                    style={{ border: "none", margin: 2 }}>
+                    style={{ border: "none", margin: 1 }}>
                     {action}
                   </button>
 

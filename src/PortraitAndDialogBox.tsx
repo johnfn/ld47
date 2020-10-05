@@ -22,15 +22,24 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
   const panelRef = React.useRef<HTMLDivElement | null>(null);
 
   const [lastSpeaker, setLastSpeaker] = React.useState<Person | null>(null)
+  const [isSpeaking, setIsSpeaking] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     if (panelRef.current) {
       panelRef.current.scrollTop = panelRef.current?.scrollHeight;
     }
     const lastEvent = events[events.length - 1];
-    if (lastEvent && 'speaker' in lastEvent && lastEvent.speaker    != "Vega") {
-      setLastSpeaker(lastEvent.speaker)
+    setIsSpeaking(false);
+    if (lastEvent) {
+      if ('speaker' in lastEvent && lastEvent.speaker != "Vega" && lastEvent.speaker != "Narrator") {
+        setLastSpeaker(lastEvent.speaker);
+        if (lastEvent.state === "animating") {
+          setIsSpeaking(true);
+        }
+      }
     }
+
+
   }, [events.length, events]);
 
   for (const event of events) {
@@ -65,17 +74,22 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
   let mostRecentDreamDialogIndex = events.map(event => event.type === "dream-dialog").lastIndexOf(true);
   let prevEvent: DisplayedEvent | null = null;
   let prevSpeaker: Person | null = null;
-  
+
 
   return (
     <div style={{ display: 'flex', flex: '0 0 400px' }}>
-      {(lastSpeaker && lastSpeaker != "Vega")  ? <Portrait person={lastSpeaker ? lastSpeaker : "Vega"} /> : <span style={{width: 130}}></span>}
+      {(lastSpeaker && lastSpeaker != "Vega") ?
+        <Portrait
+          speaking={isSpeaking}
+          person={lastSpeaker ? lastSpeaker : "Vega"}
+        /> :
+        <span style={{ width: 130 }} />}
 
       <div style={{
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        padding: "20px 15px 20px 20px",
+        padding: "20px 18px 20px 20px",
         marginLeft: 20,
         width: 220,
         backgroundColor: "white",
@@ -85,7 +99,7 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
           ref={panelRef}
           style={{
             overflow: 'auto',
-            paddingBottom: "100px",
+            paddingBottom: "60px",
           }}
         >
           {
