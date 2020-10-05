@@ -103,7 +103,15 @@ const Outdoors: Location = {
 const House: Location = {
   name: 'House',
   description: enterHouse,
-  interactors: () => { return []; },
+  interactors: () => {
+    return [
+      {
+        name: 'PastVega',
+        dialog: speakToPastVega2,
+        type: 'thing',
+      }
+    ];
+  },
   exits: ["Outdoors"],
   liveEvents: [],
   actions: ['Explore', 'Inventory', 'Interact'],
@@ -173,6 +181,9 @@ const HQ: Location = {
             yield* narrate("It's the huge screen we have in HQ.");
             yield* narrate("I like to think it's recording our research into parallel universes.");
             yield* narrate("But that's impossible, because science fiction isn't real.");
+          } else if (Checkpoint === Checkpoints["Doctor Scramble"]) {
+            yield* narrate("It's the huge screen we have in HQ.");
+            yield* narrate("It's playing the exact same thing it was playing yesterday. Weird.");
           } else {
             yield* narrate("It's the huge screen we have in HQ.");
             yield* narrate("I wonder if the person on the live feed knows we can see them.");
@@ -188,6 +199,9 @@ const HQ: Location = {
             yield* narrate("There are a bunch of scientists hard at work.");
             yield* narrate("Normally I'd go say hi, but right now it looks like Captain Sharp wants to talk with me.");
           } else if (Checkpoint === Checkpoints["Doctor Scramble"]) {
+            yield* narrate("There are a bunch of scientists hard at work.");
+            yield* narrate("They're all in the same spots they were yesterday. That's odd...");
+          } else if (Checkpoint === Checkpoints["Canadian French"]) {
             yield* narrate("There are a bunch of scientists hard at work.");
             yield* narrate("They recently built RecycleBot, a robot recycling receptacle. It's so cute!");
           } else {
@@ -435,7 +449,7 @@ function* enterHouse(): Cinematic {
       yield* speakToPV12();
 
     } if (Checkpoint === Checkpoints["Canadian French"]) {
-      yield* speaktoPV22();
+      yield* speakToPV22();
 
     } if (Checkpoint === Checkpoints["Time Travel"]) {
       yield* speakToPV31();
@@ -666,6 +680,16 @@ function* talkToHouse(): Cinematic {
     yield* speakToPV21();
   } if (Checkpoint === Checkpoints["Time Travel"]) {
     yield* speakToPV31();
+  }
+}
+
+function* speakToPastVega2(): Cinematic {
+  if (Checkpoint === Checkpoints["Game Start"]) {
+    yield* speakToPV02();
+  } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
+    yield* speakToPV12();
+  } if (Checkpoint === Checkpoints["Canadian French"]) {
+    yield* speakToPV22();
   }
 }
 
@@ -1042,7 +1066,7 @@ function* speakToPV21(): Cinematic {
   }
 }
 
-function* speaktoPV22(): Cinematic {
+function* speakToPV22(): Cinematic {
   yield* talk("Vega", "...so, to make a long story short, this isn’t my first time on this rodeo bull. The other versions of you that I mentioned earlier have helped me get here, and I’m finally close to figuring out a way to getting out of this loop, which will then allow me to take down Doctor Scramble... I assume. Any questions?");
   yield* talk("Past Vega", "This is... SO COOL!! So, what did you learn from the Scramble in my time? Anything I can help with?");
 

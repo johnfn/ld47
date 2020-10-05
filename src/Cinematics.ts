@@ -489,7 +489,7 @@ export function* explore(location: Location): Cinematic {
   const exits = location.exits;
 
   if (exits.length === 0) {
-    //yield* narrate("This room doesn't have any doors. Strange; how did you get here?");
+    yield* narrate("There's nowhere here to go.");
 
     return;
   }
