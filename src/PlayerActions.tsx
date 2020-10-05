@@ -1,6 +1,6 @@
 import React from 'react';
 import { CinematicState, DisplayedEvent, Inventory, InventoryItem } from './App';
-import { explore, runEvents, setMode } from './Cinematics';
+import { explore, runEvents, setMode, showInventory, showNearbyPeople } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location, Cinematic } from './CinematicTypes';
 import { dreamSequence1, LocationNames, Locations } from './Data';
 import { Keys } from './Utils';
@@ -32,91 +32,29 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
           status: "running",
         }]);
 
-        return;
+        break;
       }
 
       case "Inventory": {
-        actionText = "You reach into your bag.";
-
-        let items = [];
-
-        for (const item of Keys(inventory)) {
-          if (inventory[item] === true) {
-            items.push(item);
-          }
-        }
-
-        if (items.length === 0) {
-          nextDialog = { type: "describe", text: "There's nothing in there." };
-        } else {
-          nextDialog = { type: "action", options: [] }
-
-          for (const item of items) {
-            const text = `> Use ${item}`;
-            nextDialog.options.push({
-              text: text, onClick: () => {
-                setCinematics(_ => [
-                  // NOTE: intentionally clear out array here to stop all existing cinematics
-                  {
-                    cinematic:
-                      runEvents([{
-                        type: "describe",
-                        text: "Nothing happens. Hmmm... Maybe you can try a little harder next time?"
-                      }]),
-                    status: "running",
-                  }
-                ]);
-              }
-            })
-          }
-        }
+        setCinematics(_ => [{
+          // NOTE: intentionally clear out array here to stop all existing cinematics
+          cinematic: showInventory(inventory),
+          status: "running",
+        }]);
 
         break;
       }
 
       case "Talk": {
-        actionText = "You check who's nearby.";
-
-        if (location.people.length === 0) {
-          nextDialog = { type: "describe", text: "There doesn't seem to be anyone around. Spooky." }
-        } else {
-          nextDialog = { type: "action", options: [] }
-
-          for (const person of location.people) {
-            const interaction = person.dialog;
-            const text = `> Talk to ${person.name.toLowerCase()}`;
-
-            nextDialog.options.push({
-              text: text, onClick: () => {
-                setCinematics(prev => [
-                  // NOTE: intentionally clear out array here to stop all existing cinematics
-                  {
-                    cinematic: interaction,
-                    status: "running",
-                  }
-                ]);
-              }
-            })
-          }
-        }
+        setCinematics(_ => [{
+          // NOTE: intentionally clear out array here to stop all existing cinematics
+          cinematic: showNearbyPeople(location),
+          status: "running",
+        }]);
 
         break;
       }
     }
-
-    const event: DescribeEvent = { type: "describe", text: actionText, nextDialog };
-
-    setCinematics(prev => {
-      console.log('add event', event, 'should be number', prev.length + 1);
-
-      return [
-        ...prev,
-        {
-          cinematic: runEvents([event]),
-          status: "running",
-        }
-      ]
-    });
   }
   // }, [location.name, JSON.stringify(inventory), events.length]);
 

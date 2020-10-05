@@ -2,6 +2,7 @@ import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, Displaye
 import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptSelectionKeys, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent, Location, GameMode, DreamDialog } from "./CinematicTypes";
 import { Locations, Person } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
+import { Keys } from "./Utils";
 
 let lastUsedId = 0;
 
@@ -169,7 +170,20 @@ function* runPromptEvent(promptEvent: PromptEvent): Cinematic<number> {
 
   const numberOfOptions = promptEvent.options.length;
 
-  const selection = yield* waitForKeys(PromptSelectionKeys.slice(0, numberOfOptions));
+  let selection: string;
+
+  outer: while (true) {
+    for (const key of PromptSelectionKeys.slice(0, numberOfOptions)) {
+      if (Keyboard.justDown[key]) {
+        selection = key;
+
+        break outer;
+      }
+    }
+
+    yield "next";
+  }
+
   const selectedOptionIndex = PromptSelectionKeys.indexOf(selection as any);
 
   if (selectedOptionIndex === -1) { alert("AAAAAAA"); }
@@ -396,21 +410,62 @@ export function* setFutureHasChanged(): Cinematic {
   actions.setFutureHasChanged(true);
 }
 
-
 export function* explore(location: Location): Cinematic {
   yield* setInterruptable(false);
-  yield* narrate("You look around");
+  yield* narrate("You look around.");
   yield* setInterruptable(true);
 
   const exits = location.exits;
 
   if (exits.length === 0) {
     yield* narrate("This room doesn't have any doors. Strange; how did you get here?");
-  } else {
-    const result = yield* prompt(
-      exits.map(exit => exit.toLowerCase() === "outdoors" ? "Go outdoors" : "Go to " + exit)
-    );
 
-    yield* setLocation(Locations[exits[result]]);
+    return;
   }
+
+  const result = yield* prompt(
+    exits.map(exit => exit.toLowerCase() === "outdoors" ? "Go outdoors" : "Go to " + exit)
+  );
+
+  yield* setLocation(Locations[exits[result]]);
+}
+
+export function* showInventory(inventory: Inventory): Cinematic {
+  yield* setInterruptable(false);
+  yield* narrate("You reach into your bag.");
+  yield* setInterruptable(true);
+
+  const items = Keys(inventory).filter(item => inventory[item]);
+
+  if (items.length === 0) {
+    yield* narrate("There's nothing in there.");
+
+    return;
+  }
+
+  const itemPrompts = items.map(item => `Use ${item}`);
+  const selection = yield* prompt(itemPrompts);
+
+  yield* narrate("Nothing happens. Hmmm... Maybe you can try a little harder next time?");
+
+  // TODO: Stop all other cinematics
+}
+
+export function* showNearbyPeople(location: Location): Cinematic {
+  yield* setInterruptable(false);
+  yield* narrate("You check who's nearby.");
+  yield* setInterruptable(true);
+
+  const people = location.people;
+
+  if (people.length === 0) {
+    yield* narrate("There doesn't seem to be anyone around. Spooky.");
+
+    return;
+  }
+
+  const talkingPrompts = people.map(person => `Talk to ${person.name}`);
+  const selection = yield* prompt(talkingPrompts);
+
+  yield* people[selection].dialog;
 }
