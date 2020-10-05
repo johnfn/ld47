@@ -398,6 +398,14 @@ export function* enterDarkBG(): Cinematic {
 
     yield* narrate("It IS a good morning.");
     yield* narrate("It IS a beautiful world.");
+    yield* narrate("...");
+    yield* pause(1);
+    yield* narrate("....");
+    yield* pause(1);
+    yield* narrate(".........");
+    yield* pause(1);
+    yield* narrate("THE END!!", ["huge", "shaky"]);
+
 
     isGameOver = true;
 
@@ -704,8 +712,14 @@ function* talkToBusker(): Cinematic {
     yield* narrate("You toss him a coin and he texts you some digital love.");
   } if (Checkpoint === Checkpoints["Canadian French"]) {
     yield* narrate("You head over to listen to what the busker is playing.");
-    yield* narrate("His song makes you feel like part of your heart is somewhere else.");
-    yield* narrate("You non-violently toss him a coin and he does a one-man kickline.");
+
+    if (yield* hasItem("root beer")) {
+      yield* narrate("You offer him a sip of root beer.");
+      yield* narrate("He plays a C C' C F F# G C.");
+    } else {
+      yield* narrate("His song makes you feel like part of your heart is somewhere else.");
+      yield* narrate("You non-violently toss him a coin and he does a one-man kickline.");
+    }
   } if (Checkpoint === Checkpoints["Time Travel"]) {
     yield* narrate("You head over to listen to what the busker is playing.");
     yield* narrate("The melody is going uuuup and downnnn and uuuup and downnnn.");
