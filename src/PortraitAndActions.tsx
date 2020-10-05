@@ -4,6 +4,7 @@ import { Cinematic, Location } from './CinematicTypes';
 import { Locations } from './Data';
 import { runEvents } from './Cinematics';
 import { CinematicState } from './App';
+import { Portrait } from './Portrait';
 
 export const PortraitAndActions = ({ location, setCinematics }: {
   location: Location;
@@ -94,15 +95,7 @@ export const PortraitAndActions = ({ location, setCinematics }: {
   }
 
   return (<div style={{ display: "flex" }}>
-    <div style={{
-      backgroundImage: `url("${PortraitPng}")`,
-      backgroundSize: '100%',
-      backgroundColor: "white",
-      width: 130,
-      height: 180,
-      border: '1px solid black'
-    }} />
-    <PortraitPng fileName={"portrait"} />
+    <Portrait person={"Vega"} />
     {/* <div style={{
       display: "flex",
       flexDirection: "row",

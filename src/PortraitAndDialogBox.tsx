@@ -1,10 +1,11 @@
 import React from 'react';
 import { PromptEvent, PromptSelectionKeys, DialogEvent, Cinematic } from './CinematicTypes';
 import { Actions, Describe, Dialog, DialogComponent, maxDialogsToDisplay, Prompt } from './Dialog';
-import Portrait from './images/portrait2.png';
 import { PlayerActions } from './PlayerActions';
 import { Location } from './CinematicTypes';
 import { CinematicState, DisplayedEvent, Inventory } from './App';
+import { Portrait } from './Portrait';
+import { Person } from './Data';
 
 
 export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setCinematics, inventory, allowInterruptions, futureHasChanged }: {
@@ -20,11 +21,17 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
   const promptEvents: PromptEvent[] = [];
   const panelRef = React.useRef<HTMLDivElement | null>(null);
 
+  const [lastSpeaker, setLastSpeaker] = React.useState<Person | null>(null)
+
   React.useEffect(() => {
     if (panelRef.current) {
       panelRef.current.scrollTop = panelRef.current?.scrollHeight;
     }
-  }, [events.length]);
+    const lastEvent = events[events.length - 1];
+    if (lastEvent && 'speaker' in lastEvent && lastEvent.speaker    != "Vega") {
+      setLastSpeaker(lastEvent.speaker)
+    }
+  }, [events.length, events]);
 
   for (const event of events) {
     if (event.type === "dialog") {
@@ -57,25 +64,19 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
 
   let mostRecentDreamDialogIndex = events.map(event => event.type === "dream-dialog").lastIndexOf(true);
   let prevEvent: DisplayedEvent | null = null;
-  let prevSpeaker: string | null = null;
+  let prevSpeaker: Person | null = null;
+  
 
   return (
     <div style={{ display: 'flex', flex: '0 0 400px' }}>
-      <div
-        style={{
-          border: '1px solid black',
-          height: 180,
-          width: 130,
-          margin: "0px 20px 0px 0px",
-          backgroundImage: `url("${Portrait}")`,
-          backgroundSize: '100%',
-        }} />
+      {(lastSpeaker && lastSpeaker != "Vega")  ? <Portrait person={lastSpeaker ? lastSpeaker : "Vega"} /> : <span style={{width: 130}}></span>}
 
       <div style={{
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
         padding: "20px 15px 20px 20px",
+        marginLeft: 20,
         width: 220,
         backgroundColor: "white",
         border: '1px solid black',
@@ -90,7 +91,7 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
           {
             events.slice(events.length - maxDialogsToDisplay).map((event, i) => {
               let showTimestamp = false;
-              let speaker = 'speaker' in event ? event.speaker : "narrator";
+              let speaker = 'speaker' in event ? event.speaker : "Narrator";
               let result: React.ReactNode;
 
               if (event.type === "dream-dialog") {
