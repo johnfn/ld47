@@ -1,27 +1,53 @@
 import { DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedDreamDialog, DisplayedEvent, DisplayedPrompt as DisplayedPromptEvent, Inventory } from "./App";
 import { DialogEvent, Cinematic, CinematicEvent, PromptEvent, PromptSelectionKeys, ActionEvent, DescribeEvent, BackgroundDialog as BackgroundDialogEvent, ChangeLocationEvent, Location, GameMode, DreamDialog } from "./CinematicTypes";
-import { Locations, Person } from "./Data";
+import { Checkpoint, Checkpoints, Locations, pause, Person } from "./Data";
 import { Keyboard, KeyName } from "./Keyboard";
 import { Keys } from "./Utils";
+
+export const SetAudioToLoop = (audio: HTMLAudioElement) => {
+  audio.addEventListener('ended', () => {
+    audio.currentTime = 0;
+    audio.play();
+  });
+
+  return audio;
+}
+
+const Songs = {
+  "Another Me": SetAudioToLoop(new Audio("./Another Me.mp3")),
+  "Another Me (less stuff)": SetAudioToLoop(new Audio("./Another Me (less stuff).mp3")),
+  "city": SetAudioToLoop(new Audio("./city.mp3")),
+  "HQ": SetAudioToLoop(new Audio("./HQ.mp3")),
+  "L-O-O-P (back alley)": SetAudioToLoop(new Audio("./L-O-O-P (back alley).mp3")),
+  "L-O-O-P (The Royal Skillet)": SetAudioToLoop(new Audio("./L-O-O-P (The Royal Skillet).mp3")),
+  "Royal Skillet BG": SetAudioToLoop(new Audio("./Royal Skillet BG.mp3")),
+  "time ray SUPERCHARGING": SetAudioToLoop(new Audio("./time ray SUPERCHARGING.mp3")),
+  "time ray": SetAudioToLoop(new Audio("./time ray.mp3")),
+  "time travel": SetAudioToLoop(new Audio("./time travel.mp3")),
+}
+
+export function* playSong(name: keyof typeof Songs): Cinematic {
+  if (!Songs[name].paused) {
+    // it's already playing. 
+    return;
+  }
+
+  yield* stopAllMusic();
+  Songs[name].play();
+}
+
+export function* stopAllMusic(): Cinematic {
+  for (const song of Keys(Songs)) {
+    Songs[song].pause();
+    Songs[song].currentTime = 0;
+  }
+}
 
 let lastUsedId = 0;
 
 const generateId = () => {
   return String(++lastUsedId);
 };
-
-// TODO: Would be cool if when the speaker is the same twice in a row, we omit the speaker header the second time.
-//
-// NARRATOR        10:02 PM
-//   sup.
-//   how are you.  10:03 PM <-- time is onHover only
-//
-// instead of:
-//
-// NARRATOR        10:02 PM
-//   sup.
-// NARRATOR        10:03 PM
-//   how are you.  
 
 function addEvent(setEvents: (value: React.SetStateAction<DisplayedEvent[]>) => void, newEvent: DisplayedEvent) {
   setEvents(oldEvents => {
@@ -265,7 +291,7 @@ function* runChangeLocation(event: ChangeLocationEvent): Cinematic {
 
   actions.setActiveLocation(event.newLocation);
 
-  yield* event.newLocation.description;
+  yield* event.newLocation.description();
 }
 
 export function* displayText(): Cinematic {
@@ -348,10 +374,35 @@ export function* setInterruptable(value: boolean): Cinematic {
 }
 
 export function* setLocation(newLocation: Location): Cinematic {
+  // <<<<<<<
+  // function that makes portrait disappear (figure this out)
+
+  if (newLocation.name === "Alleyway") {
+    yield* playSong("L-O-O-P (back alley)");
+  } else if (newLocation.name === "Bar") {
+    yield* playSong("L-O-O-P (The Royal Skillet)");
+  } else if (newLocation.name === "DarkBG") {
+    yield* stopAllMusic();
+  } else if (newLocation.name === "HQ") {
+    yield* playSong("HQ");
+  } else if (newLocation.name === "House") {
+    yield* playSong("Another Me");
+  } else if (newLocation.name === "Outdoors") {
+    yield* playSong("city");
+  }
+
+  //yield* setMode("DreamSequence");
+
+  //if (newLocation.name === "HQ" || newLocation.name === "DarkBG") {
+  //  yield* setMode("Future");
+  //} else yield* setMode("Past");
+
   yield* runChangeLocation({
     newLocation,
     type: "change-location",
   });
+
+  yield* pause(1);
 }
 
 export function* prompt(options: string[]): Cinematic<number> {
@@ -363,6 +414,11 @@ export function* prompt(options: string[]): Cinematic<number> {
 
 export function* giveItem(item: keyof Inventory): Cinematic {
   yield* addToInventory(item)
+}
+
+export function* hasItem(item: keyof Inventory): Cinematic<boolean> {
+  const actions = yield "next";
+  return actions.inventory[item];
 }
 
 export const PastDate = new Date(Date.parse('14 April 2012 10:00:00 PST'))
@@ -421,6 +477,7 @@ export function* setMode(newMode: GameMode): Cinematic {
 
 export function* setFutureHasChanged(): Cinematic {
   const actions = yield 'next';
+
   actions.setFutureHasChanged(true);
 }
 
@@ -432,7 +489,7 @@ export function* explore(location: Location): Cinematic {
   const exits = location.exits;
 
   if (exits.length === 0) {
-    yield* narrate("This room doesn't have any doors. Strange; how did you get here?");
+    //yield* narrate("This room doesn't have any doors. Strange; how did you get here?");
 
     return;
   }

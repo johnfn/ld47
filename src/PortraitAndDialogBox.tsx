@@ -6,6 +6,7 @@ import { Location } from './CinematicTypes';
 import { CinematicState, DisplayedEvent, Inventory } from './App';
 import { Portrait } from './Portrait';
 import { Person } from './Data';
+import { reduceEachLeadingCommentRange } from 'typescript';
 
 
 export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setCinematics, inventory, allowInterruptions, futureHasChanged }: {
@@ -28,16 +29,29 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
     if (panelRef.current) {
       panelRef.current.scrollTop = panelRef.current?.scrollHeight;
     }
+
     const lastEvent = events[events.length - 1];
     setIsSpeaking(false);
-    if (lastEvent) {
-      if ('speaker' in lastEvent && lastEvent.speaker != "Vega" && lastEvent.speaker != "Narrator") {
-        setLastSpeaker(lastEvent.speaker);
-        if (lastEvent.state === "animating") {
-          setIsSpeaking(true);
+
+    if (lastEvent && 'speaker' in lastEvent) {
+      if (lastEvent.speaker) {
+        if (lastEvent.speaker === "Narrator") {
+          setLastSpeaker("You find yourself...") // hack to display no portrait box
+        } else if (lastEvent.speaker === "Vega") {
+          setLastSpeaker(lastSpeaker) // hack to display no portrait box
+        } else {
+          setLastSpeaker(lastEvent.speaker);
+          if (lastEvent.state === "animating") {
+            setIsSpeaking(true);
+          }
         }
       }
+    } else {
+      setLastSpeaker('You find yourself...') // hack to display no portrait box
     }
+
+    console.log(lastSpeaker);
+
 
 
   }, [events.length, events]);
@@ -75,12 +89,14 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
   let prevEvent: DisplayedEvent | null = null;
   let prevSpeaker: Person | null = null;
 
+  let index = 0;
+
   return (
     <div style={{ display: 'flex', flex: '0 0 400px' }}>
-      {(lastSpeaker && lastSpeaker != "Vega") ?
+      {(lastSpeaker) ?
         <Portrait
           speaking={isSpeaking}
-          person={lastSpeaker ? lastSpeaker : "Vega"}
+          person={lastSpeaker ? lastSpeaker : "You find yourself..."}
         /> :
         <span style={{ width: 130 }} />}
 
@@ -89,7 +105,7 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
         flexDirection: "column",
         justifyContent: "space-between",
         padding: "20px 18px 20px 20px",
-        transform: 'translateX(60px)',
+        transform: 'translateX(0px)',
         width: 300,
         backgroundColor: "white",
         border: '1px solid black',
@@ -102,7 +118,7 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
           }}
         >
           {
-            events.slice(events.length - maxDialogsToDisplay).map((event, i) => {
+            events.slice(-maxDialogsToDisplay).map((event, i) => {
               let showTimestamp = false;
               let speaker = 'speaker' in event ? event.speaker : "Narrator";
               let result: React.ReactNode;
@@ -134,18 +150,21 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
                   lastTimeString = event.time;
                 }
 
-                const happenedInPast = (i < mostRecentDreamDialogIndex);
+                // debugger; 
+                // const happenedInPast = (index < mostRecentDreamDialogIndex);
 
                 // NOTE: Index is backwards. The last element in the list (i = events.length - 1)
                 // is passed in as index = 0. This is for div text color calculation only.
                 result = <DialogComponent
                   event={event}
                   markActionAsTaken={markActionAsTaken}
-                  index={events.length - i - 1}
+                  index={Math.min(events.length, maxDialogsToDisplay) - i}
                   showTimestamp={showTimestamp}
-                  happenedInPast={happenedInPast}
+                  happenedInPast={false}
                   showSpeaker={speaker !== prevSpeaker}
                 />
+
+                index++;
               }
 
               prevEvent = event;

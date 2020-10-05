@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CinematicState, DisplayedEvent, Inventory, InventoryItem } from './App';
 import { explore, runEvents, setMode, showInventory, showNearbyInteractors } from './Cinematics';
 import { DescribeEvent, CinematicEvent, Location, Cinematic } from './CinematicTypes';
@@ -18,7 +18,29 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
     return currentLocation.exits.includes(nextLocation);
   };
 
-  const onClickActionItem = /* React.useCallback( */ (action: string, i: number) => {
+  useEffect(() => {
+    const handler = (ev: KeyboardEvent) => {
+      if (ev.key.toUpperCase() === "Q") {
+        onClickActionItem("Explore");
+      }
+
+      if (ev.key.toUpperCase() === "W") {
+        onClickActionItem("Inventory");
+      }
+
+      if (ev.key.toUpperCase() === "E") {
+        onClickActionItem("Interact");
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+
+    return () => {
+      window.removeEventListener("keydown", handler);
+    };
+  });
+
+  const onClickActionItem = /* React.useCallback( */ (action: string) => {
     markActionAsTaken(events[events.length - 1].id);
 
     switch (action) {
@@ -78,12 +100,15 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
             style={{
               margin: "auto", padding: "0px 4px 2px", marginTop: 4
             }}
+            onFocus={e => {
+              e.target.blur();
+            }}
             onClick={onClickFutureButton}>Give in</button>
         </div>
       }
       <div style={{ display: "flex", justifyContent: "center" }}>
 
-        <div style={{ width: 200 }}>
+        <div>
           {
             location.actions.map((action, i) => {
               let disabled = false;
@@ -123,7 +148,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
                 <>
                   <button
                     onClick={event => {
-                      onClickActionItem(action, i);
+                      onClickActionItem(action);
                     }}
                     onFocus={e => {
                       e.currentTarget.blur();
@@ -131,6 +156,9 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
                     disabled={disabled}
                     style={{ border: "none", margin: 1 }}>
                     {action}
+                    {i === 0 ? " (Q)" : null}
+                    {i === 1 ? " (W)" : null}
+                    {i === 2 ? " (E)" : null}
                   </button>
 
                   <span> {i !== location.actions.length - 1 ? " | " : null}</span>

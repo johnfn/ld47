@@ -1,5 +1,5 @@
 import { Debug } from "./App";
-import { talk, narrate, giveItem, narrateInBackground, prompt, setMode, dreamTalk, setLocation, setInterruptable, setFutureHasChanged } from "./Cinematics";
+import { playSong, stopAllMusic, talk, narrate, giveItem, narrateInBackground, prompt, setMode, dreamTalk, setLocation, setInterruptable, setFutureHasChanged, hasItem } from "./Cinematics";
 import { AllLocations, Cinematic, Location } from "./CinematicTypes";
 
 export type Person =
@@ -16,6 +16,7 @@ export type Person =
   | 'Seedy Guy'
   | 'Shady Guy'
   | 'Past Scramble'
+  | 'You find yourself...'
 
 export enum Checkpoints {
   'Game Start',
@@ -32,7 +33,7 @@ export function setCheckpointNoYield(newCheckpoint: Checkpoints) { Checkpoint = 
 
 const Bar: Location = {
   name: 'Bar',
-  description: enterBar(),
+  description: enterBar,
   interactors: () => {
     return [
       {
@@ -67,7 +68,7 @@ const Bar: Location = {
 
 const Outdoors: Location = {
   name: 'Outdoors',
-  description: enterOutside(),
+  description: enterOutside,
   interactors: () => {
     return [
       {
@@ -101,7 +102,7 @@ const Outdoors: Location = {
 
 const House: Location = {
   name: 'House',
-  description: enterHouse(),
+  description: enterHouse,
   interactors: () => { return []; },
   exits: ["Outdoors"],
   liveEvents: [],
@@ -110,7 +111,7 @@ const House: Location = {
 
 const DarkBG: Location = {
   name: 'DarkBG',
-  description: enterDarkBG(),
+  description: enterDarkBG,
   interactors: () => { return []; },
   exits: [],
   liveEvents: [],
@@ -119,7 +120,7 @@ const DarkBG: Location = {
 
 const Alleyway: Location = {
   name: 'Alleyway',
-  description: enterAlleyway(),
+  description: enterAlleyway,
   interactors: () => {
     return [
       {
@@ -157,7 +158,7 @@ const Alleyway: Location = {
 
 const HQ: Location = {
   name: 'HQ',
-  description: describeHQ(),
+  description: describeHQ,
   interactors: () => {
     return [
       {
@@ -186,7 +187,7 @@ const HQ: Location = {
           if (Checkpoint === Checkpoints["Game Start"]) {
             yield* narrate("There are a bunch of scientists hard at work.");
             yield* narrate("Normally I'd go say hi, but right now it looks like Captain Sharp wants to talk with me.");
-          } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
+          } else if (Checkpoint === Checkpoints["Doctor Scramble"]) {
             yield* narrate("There are a bunch of scientists hard at work.");
             yield* narrate("They recently built RecycleBot, a robot recycling receptacle. It's so cute!");
           } else {
@@ -227,17 +228,20 @@ export const Locations: AllLocations = {
 };
 
 let hasntSeenEnterAlleyway = true;
-function* enterAlleyway(): Cinematic {
+export function* enterAlleyway(): Cinematic {
   if (Checkpoint === Checkpoints["Game Start"]) {
     if (hasntSeenEnterAlleyway) {
+
+      yield* narrate("---------------");
+      yield* talk("You find yourself...", "...in an alleyway.");
       yield* talk("Vega", "What the... where am I?");
 
-      if (!Debug) {
-        yield* talk("Vega", "Captain Sharp? Hello?");
-        yield* talk("Vega", "Wait... I know this alley. This is in downtown Chipville. I lived here before I moved to take that job at NATCH...");
-        yield* talk("Vega", "It looks just like I remember it, too.");
-        yield* talk("Vega", "Well, might as well take a look around.");
-      }
+      //if (!Debug) {
+      yield* talk("Vega", "Captain Sharp? Hello?");
+      yield* talk("Vega", "Wait... I know this alley. This is in downtown Chipville. I lived here before I moved to take that job at NATCH...");
+      yield* talk("Vega", "It looks just like I remember it, too.");
+      yield* talk("Vega", "Well, might as well take a look around.");
+      //}
 
       hasntSeenEnterAlleyway = false;
     } else {
@@ -248,7 +252,7 @@ function* enterAlleyway(): Cinematic {
   if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     if (hasntSeenEnterAlleyway) {
       yield* talk("Vega", "Ugh... back in this gross alley again. That Doctor Scramble really is something else. ");
-      yield* talk("Vega", "I’m glad that past me learned all that stuff about him, though. I can read through some of that info in the journal in my INVENTORY. ");
+      yield* talk("Vega", "I’m glad that past me learned all that stuff about him, though. I know a lot more about his history, especially with the Canadian mafia.");
       yield* talk("Vega", "Hey, maybe past me will have some idea on how to actually get Doctor Scramble to listen to me and get me out of this weird time loop. ");
       yield* talk("Vega", "Wait, will past me even remember me? Only one way to find out, I guess. ");
 
@@ -259,6 +263,7 @@ function* enterAlleyway(): Cinematic {
   }
   if (Checkpoint === Checkpoints["Canadian French"]) {
     if (hasntSeenEnterAlleyway) {
+      yield* narrate("You're back in the alley.");
       yield* talk("Vega", "Somehow, this alley gets grosser and grosser every time.");
       yield* talk("Vega", "Alright, I guess I should go check out the mafia before I go meet myself again. Wouldn’t want to drag her into this dirty business—she’s already so... fragile.");
       yield* talk("Vega", "If past past me is right, their base of operations should be the Royal Skillet bar.");
@@ -281,6 +286,7 @@ export function* describeHQ(): Cinematic {
 
 export function* startGame(): Cinematic {
   yield* setLocation(Locations.DarkBG);
+  // yield* setFutureHasChanged();
 
   // yield* setInterruptable(false);
 
@@ -327,41 +333,55 @@ let isGameOver = false;
 export function* enterDarkBG(): Cinematic {
   yield* setInterruptable(false);
 
+  let day = 1;
+
   if (Checkpoint === Checkpoints["Game Start"]) {
     yield* talk("Vega", "Ah... Good morning, beautiful world!");
     yield* talk("Vega", "Well, no time to waste. The Captain said that he had some big news for me. Gotta head to work!");
     yield* setInterruptable(true);
 
+    day = 1;
   } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
+    yield* stopAllMusic();
     yield* talk("Vega", "Ah... good morning, beautif... huh.");
     yield* talk("Vega", "What even happened yesterday? Did I really go back in time? Was that all a dream?");
     yield* talk("Vega", "It can’t have been. That sounds like a plot twist that a really bad game developer would write.");
     yield* talk("Vega", "Besides, I know all this information about Doctor Scramble now... Oh well, can’t dwell on that. I should go apologize to the Captain about what happened.");
     yield* setInterruptable(true);
 
+    day = 2;
   } if (Checkpoint === Checkpoints["Canadian French"]) {
+    yield* stopAllMusic();
     yield* talk("Vega", "Ah... good morning. Beautiful world.");
     yield* talk("Vega", "So, here I am again. Please please please be December 9th when I check my phone.");
     yield* talk("Vega", "... Yeah. No such luck. I guess we’re doing this.");
     yield* talk("Vega", "Might as well head to work to confront Doctor Scramble again, I guess.");
     yield* setInterruptable(true);
 
+    day = 3;
   } if (Checkpoint === Checkpoints["Time Travel"]) {
+    yield* stopAllMusic();
     yield* talk("Vega", "Goood morning world. Here we go again.");
     yield* setInterruptable(true);
 
+    day = 4;
   } if (Checkpoint === Checkpoints["Time Ray"]) {
+    yield* stopAllMusic();
     yield* talk("Vega", "...I’m awake. That’s good.");
     yield* talk("Vega", "And I remember... time theory. And engineering. Wait, my time ray! Do I have my time ray?");
     yield* narrate("Your inventory contains one TIME RAY.");
     yield* talk("Vega", "Yes! I came through! ...but there’s one more thing I need to do before I use this.");
 
+    day = 5;
   } if (Checkpoint === Checkpoints["Game Over"]) {
+    day = 6;
+    yield* stopAllMusic();
     yield* talk("Vega", "Am... Am I alive?");
     yield* talk("Vega", "Is this my bed? It is! What day is it?");
     yield* talk("Vega", "...");
     yield* talk("Vega", "December 9th...");
     yield* talk("Vega", "DECEMBER 9TH!!!!");
+
     yield* narrate("It IS a good morning.");
     yield* narrate("It IS a beautiful world.");
 
@@ -376,26 +396,42 @@ export function* enterDarkBG(): Cinematic {
   }
 
   if (!isGameOver) {
-    yield* setMode("DreamSequence");
-    yield* dreamTalk("DAY 1");
-    yield* dreamTalk("");
-    yield* dreamTalk("MONDAY, DECEMBER 8th");
-    yield* dreamTalk("");
-    yield* dreamTalk("NATIONAL AGENCY FOR CONTAINMENT OF THREATS HEADQUARTERS (NATCH)");
-    yield* setMode("Future");
+    if (!Debug) {
+      yield* setMode("DreamSequence");
+      yield* dreamTalk(`DAY ${day}`);
+      yield* dreamTalk("");
+      yield* dreamTalk("MONDAY, DECEMBER 8th");
+      yield* dreamTalk("");
+      yield* dreamTalk("NATIONAL AGENCY FOR CONTAINMENT OF THREATS HEADQUARTERS (NATCH)");
+      yield* setMode("Future");
+    }
 
     yield* setLocation(Locations.HQ);
   }
 }
 
 function* enterHouse(): Cinematic {
+  debugger;
+
   if (canEnterHouse === false) {
     yield* setLocation(Locations.Outdoors);
+    if (Checkpoint === Checkpoints["Game Start"]) {
+      yield* narrate("You can't just enter a random house! ...There is something familiar about it, though.");
+      yield* narrate("Maybe you should inspect it more closely.");
+    } else {
+      yield* narrate("It's your old house! ...but you should probably check with past you before going in, though.");
+    }
   } else {
     if (Checkpoint === Checkpoints["Game Start"]) {
-      yield* speakToPV02();
+      // bc canEnterHouse is false right? or is that happening when its also true // it's happening when true. i'm in the house but the text isn't activating
+      // try uhh 
+      console.log(canEnterHouse);
+      console.log(speakToPV02);
+      yield* speakToPV02(); // this line isn't automatically showing up when u enter house and i'm not sure why
 
     } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
+      console.log(canEnterHouse);
+      console.log(speakToPV12);
       yield* speakToPV12();
 
     } if (Checkpoint === Checkpoints["Canadian French"]) {
@@ -419,7 +455,7 @@ let alreadyOrderedToday: { [key in Checkpoints]?: boolean } = {};
 function* speakToBartender(): Cinematic {
   if (alreadyOrderedToday[Checkpoint]) {
     yield* talk("Bartender", "Oh... you again?");
-    yield* talk("Bartender", "I'm cutting you off - but come back tomorrow!");
+    yield* talk("Bartender", "I'm cutting you off - but you can always back tomorrow!");
 
     return;
   }
@@ -483,9 +519,7 @@ function* speakToBartender(): Cinematic {
     yield* talk("Vega", "Oh. :(")
     yield* talk("Bartender", "But I feel bad for letting you down.");
     yield* talk("Bartender", "Here.");
-
     yield* narrate("You receive one IOU FOR ONE COBB SALAD.");
-
     yield* giveItem("IOU for one cobb salad");
   }
 
@@ -508,10 +542,13 @@ function* speakToShadyGuy(): Cinematic {
     if (result === 0) {
       yield* talk("Vega", "Good morning! How ya doin?");
       yield* talk("Shady Guy", "Ain't no good mornings here. Beat it, kid.");
+
+      yield* narrate("Apparently he doesn't want to be talked to...")
     }
 
     if (result === 1) {
-      if (talkedToPastScramble = false) {
+      if (!talkedToPastScramble) {
+        console.log(talkedToPastScramble);
         yield* talk("Vega", "Le chat scintille de lait de castor. ");
         yield* talk("Shady Guy", "Ah, tres bien. What may I do for you, camarade? ");
         yield* talk("Vega", "Oh! Um, I would like to speak to Scramble, please. ");
@@ -540,15 +577,14 @@ function* speakToShadyGuy(): Cinematic {
 
         talkedToPastScramble = true;
         yield* setLocation(Locations.Outdoors);
+        yield* pause(2);
 
         yield* talk("Vega", "Wow, those acting and fake-drinking lessons I had to take for NATCH applications REALLY paid off.");
       } else {
         yield* talk("Vega", "Le chat scintille de lait de castor. ");
         yield* talk("Shady Guy", "Ah, I am afraid that Monsieur Scramble is busy. Please return at a later time.");
       }
-
     }
-
   } else {
     yield* talk("Shady Guy", "Whaddaya want, eh?");
     const result = yield* prompt([
@@ -559,6 +595,8 @@ function* speakToShadyGuy(): Cinematic {
     if (result === 0) {
       yield* talk("Vega", "Good morning! How ya doin?");
       yield* talk("Shady Guy", "Ain't no good mornings here. Beat it, kid.");
+
+      yield* narrate("Apparently he doesn't want to be talked to...")
     }
 
     if (result === 1) {
@@ -573,14 +611,19 @@ function* speakToSeedyGuy(): Cinematic {
   if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     yield* talk("Seedy Guy", "Oh, were you looking for speedy guy? I'm SEEDY guy.");
     yield* talk("Seedy Guy", "Speedy guy's out back, I think. Maybe. Every time I go check, he's already gone.");
-  }
-  if (Checkpoint === Checkpoints["Canadian French"]) {
+
+    if (yield* hasItem("root beer")) {
+      yield* talk("Seedy Guy", "Dang... nice root beer.");
+      yield* talk("Seedy Guy", "I wish I had one.");
+    }
+  } else if (Checkpoint === Checkpoints["Canadian French"]) {
     yield* talk("Seedy Guy", "...French? Naw, iunno any o' that stuff.");
     yield* talk("Seedy Guy", "I'm just here for the booze, ya dig?");
   } else {
     yield* talk("Seedy Guy", "Hehe, yup. Ya got me. I'm a pretty seedy guy.");
     yield* talk("Seedy Guy", "Naw, I ain't no gardener or anything. These stains on my clothes ain't dirt stains, if ya know what I'm sayin'!");
   }
+
   // yield* giveItem("book");
   // yield* setFutureHasChanged();
 }
@@ -663,45 +706,49 @@ function oneInTen() {
 
 function* speakToCaptainSharp01(): Cinematic {
   yield* talk("Captain Sharp", "Hey, Vega!");
-  yield* talk("Vega", "Morning, Captain! You said yesterday that you had news?");
 
-  yield* talk("Captain Sharp", "Right, right! I do indeed.");
-  yield* talk("Captain Sharp", "We’ve been monitoring your work and have noticed that you’ve been incredibly productive lately.");
-  yield* talk("Captain Sharp", "Your takedown of the Goober Gang last month was some top-notch stuff, and I heard from Withers in Recon that you’ve spent most of last week on a highly successful stakeout mission. Your country is safer with you in it!");
-  yield* talk("Vega", "Thanks so much! All in the line of duty, sir.")
-  yield* talk("Captain Sharp", "In fact, we’re so happy with your performance that we’re going to give you this next week off. Congratulations! ")
-  yield* talk("Vega", "OMG YAY!!!", ["huge"]);
-  yield* talk("Captain Sharp", "Keep this up, and you might even be on track for a promotion soon!");
-  yield* narrate("The captain winks.");
-  yield* narrate("It's a bit unsettling.");
-  yield* talk("Vega", "Will do, Captain!! You have no idea how—");
-  yield* talk("Vega", "Wait...", ["slow"])
-  yield* narrate("r u m b l e", ["shaky"])
-  yield* talk("Vega", "What’s that noise...?", ["slow"]);
+  if (!Debug) {
+    yield* talk("Vega", "Morning, Captain! You said yesterday that you had news?");
 
-  yield* narrate("C R A S H", ["huge", "shaky"])
+    yield* talk("Captain Sharp", "Right, right! I do indeed.");
+    yield* talk("Captain Sharp", "We’ve been monitoring your work and have noticed that you’ve been incredibly productive lately.");
+    yield* talk("Captain Sharp", "Your takedown of the Goober Gang last month was some top-notch stuff, and I heard from Withers in Recon that you’ve spent most of last week on a highly successful stakeout mission. Your country is safer with you in it!");
+    yield* talk("Vega", "Thanks so much! All in the line of duty, sir.")
+    yield* talk("Captain Sharp", "In fact, we’re so happy with your performance that we’re going to give you this next week off. Congratulations! ")
+    yield* talk("Vega", "OMG YAY!!!", ["huge"]);
+    yield* talk("Captain Sharp", "Keep this up, and you might even be on track for a promotion soon!");
+    yield* narrate("The captain winks.");
+    yield* narrate("It's a bit unsettling.");
+    yield* talk("Vega", "Will do, Captain!! You have no idea how—");
+    yield* talk("Vega", "Wait...", ["slow"])
+    yield* narrate("r u m b l e", ["shaky"])
+    yield* talk("Vega", "What’s that noise...?", ["slow"]);
 
-  yield* talk("???", "MUAHAHA! Prepare to meet your end, NATCH! I have finally discovered your secret hideout!!!")
-  yield* talk("Vega", "Oh no...");
-  yield* talk("Vega", "Who the hell is this guy?! ");
-  yield* talk("Captain Sharp", "Let’s just say he’s bad news. I’ll handle this. ");
-  yield* talk("Captain Sharp", "Hey! Jerk! Get out of our headquarters. ");
-  yield* talk("???", "oOoOh i’M sO sCaReD ");
-  yield* talk("Captain Sharp", "I MEAN it, bub. Don’t think we don’t know who you are, Doctor Scramble. ");
-  yield* talk("Doctor Scramble", "Hah! If you know who I am, then you already know too much about the secret weapon I’ve been developing. Guess it’s time to give my little prototype here a test run ;) ");
-  yield* talk("Vega", "Is that a gun?! ");
-  yield* talk("Doctor Scramble", "MWAHAHAHAHA ");
-  yield* talk("Vega", "N O O O O O O O O ", ["slow"]);
-  yield* narrate("ZAP!");
-  yield* talk("Captain Sharp", "Wha... VEGA! NO! WHY DID YOU DO THAT ");
-  yield* talk("Vega", "It’s okay... I’m happy to take a bullet for my captain... ");
-  yield* talk("Captain Sharp", "Vega... ");
-  yield* talk("Captain Sharp", "That wasn’t a bullet. ");
-  yield* talk("Doctor Scramble", "IT SURE WASN’T! ");
-  yield* talk("Vega", "What the... ");
-  yield* talk("Vega", "Why am I GLOWING? ");
-  yield* talk("Vega", "WHAT HAVE YOU DONE TO ME?! ");
-  yield* talk("Doctor Scramble", "How interesting! ");
+    yield* narrate("C R A S H", ["huge", "shaky"])
+
+    yield* talk("???", "MUAHAHA! Prepare to meet your end, NATCH! I have finally discovered your secret hideout!!!")
+    yield* talk("Vega", "Oh no...");
+    yield* talk("Vega", "Who the hell is this guy?! ");
+    yield* talk("Captain Sharp", "Let’s just say he’s bad news. I’ll handle this. ");
+    yield* talk("Captain Sharp", "Hey! Jerk! Get out of our headquarters. ");
+    yield* talk("???", "oOoOh i’M sO sCaReD ");
+    yield* talk("Captain Sharp", "I MEAN it, bub. Don’t think we don’t know who you are, Doctor Scramble. ");
+    yield* talk("Doctor Scramble", "Hah! If you know who I am, then you already know too much about the secret weapon I’ve been developing. Guess it’s time to give my little prototype here a test run ;) ");
+    yield* talk("Vega", "Is that a gun?! ");
+    yield* talk("Doctor Scramble", "MWAHAHAHAHA ");
+    yield* talk("Vega", "N O O O O O O O O ", ["slow"]);
+    yield* narrate("ZAP!");
+    yield* talk("Captain Sharp", "Wha... VEGA! NO! WHY DID YOU JUMP IN FRONT OF ME?");
+    yield* talk("Vega", "It’s okay... I’m happy to take a bullet for my captain... ");
+    yield* talk("Captain Sharp", "Vega... ");
+    yield* talk("Captain Sharp", "That wasn’t a bullet. ");
+    yield* talk("Doctor Scramble", "IT SURE WASN’T! ");
+    yield* talk("Vega", "What the... ");
+    yield* talk("Vega", "Why am I GLOWING? ");
+    yield* talk("Vega", "WHAT HAVE YOU DONE TO ME?! ");
+    yield* talk("Doctor Scramble", "How interesting! ");
+  }
+
   yield* talk("Vega", "I... ");
   yield* talk("Vega", "I don’t feel so good... ");
   // TODO: Vega fades
@@ -710,18 +757,19 @@ function* speakToCaptainSharp01(): Cinematic {
   yield* setMode("Past");
   yield* thrownInPastForFirstTime();
   // TODO: Figure out how to add Milo's time machine sound effect whenever this occurs
-
-
 }
 
 export function* thrownInPastForFirstTime(): Cinematic {
+  yield* playSong("time travel");
+  yield* pause(4);
   yield* setLocation(Locations.Alleyway);
 }
 
 let canEnterHouse = false;
 
 function* speakToPV01(): Cinematic {
-  yield* talk("Vega", "Hey, it’s my old house!");
+  yield* talk("Vega", "Hey, that's...");
+  yield* talk("Vega", "That’s my old house!!");
   yield* talk("Vega", "Wait, why are the people inside moving out already? I didn’t sell it THAT long ago... I hope I didn’t leave behind any pests or broken appliances or anything.");
   yield* talk("Vega", "It’s cool that they’re using the same moving company as I did, though. Glad they took my recommendation!");
   yield* talk("Vega", "Ooh, the door’s open. If they’re already moving out, I’m sure they wouldn’t mind if I took a peek inside...");
@@ -757,6 +805,9 @@ function* speakToPV01(): Cinematic {
 }
 
 function* speakToPV02(): Cinematic {
+  yield* talk("Other Vega", "So, uh, tell me. Why are you here?");
+  yield* talk("Vega", "I'm honestly not sure? It's a confusing and short story.");
+  yield* narrate("You relay what happened this morning.");
   yield* talk("Vega", "...and then everything was normal until this strange-looking guy that the Captain called “Doctor Scramble” shot me with some weird raygun. Except there wasn’t a bullet, it was just a beam of light. Next thing I know, I’m back here, on what I can only assume is some day eight months ago. ");
   yield* talk("Other Vega", "So, what you’re saying is that you’re now stuck here with me?");
   yield* talk("Vega", "I mean, you know as much about what’s going on as I do. I’d never even heard of Doctor Scramble before today.");
@@ -799,13 +850,15 @@ function* speakToPV02(): Cinematic {
       yield* talk("Vega", "Hmm... Make sure to pick an office with a window, unless it’s the one next to Corporal Rogers. The cafeteria has great tofu bowls and terrible Cobb salads. Oh, and if you get the chance, try to find out anything you can about this Doctor Scramble guy. I have a feeling there may be more than meets the eye here.");
       yield* talk("Other Vega", "Will do! I’ll make sure to find out as much as I can.");
       yield* talk("Vega", "Sounds good! And—wait, what’s that sound?");
-      // TODO: the YOU'VE CHANGED alarm occurs here 
+      yield* talk("Vega", "What the hell?!");
+      yield* talk("Other Vega", "What is it? I don’t see anything.");
+      yield* talk("Vega", "AAAAAAAA");
+
+      yield* setFutureHasChanged()
       break;
     }
   }
-  yield* talk("Vega", "What the hell?!");
-  yield* talk("Other Vega", "What is it? I don’t see anything.");
-  yield* talk("Vega", "AAAAAAAA");
+
 }
 
 
@@ -856,6 +909,8 @@ function* speakToCaptainSharp11(): Cinematic {
 }
 
 export function* thrownInPastForSecondTime(): Cinematic {
+  yield* playSong("time travel");
+  yield* pause(4);
   yield* setLocation(Locations.Alleyway);
 }
 
@@ -886,6 +941,7 @@ function* speakToPV11(): Cinematic {
 }
 
 function* speakToPV12(): Cinematic {
+  yield* narrate("You explain the situation thus far to past Vega.");
   yield* talk("Vega", "...and that’s pretty much what’s happened so far. The last time I met you, you even agreed to help me write up a summary of everything you could find out about Doctor Scramble, which was pretty helpful. I have it with me here. ");
   yield* talk("Past Vega", "I made this?! No way. It’s so well formatted! ");
   yield* talk("Vega", "Don’t flatter yourself. Like, literally. ");
@@ -920,13 +976,15 @@ function* speakToPV12(): Cinematic {
       yield* talk("Vega", "Very good. How, I don’t know when or how I’ll be transported to the future again, but if you learn the language and get in close with them, who knows? Maybe this’ll work after all. ");
       yield* talk("Past Vega", "You got it! I’ll be on the Canadian mafia like barbecue sauce on mashed potatoes! ");
       yield* talk("Vega", "I... uh... yes. Did I really do that when I was your age? ");
-      // TODO: the YOU'VE CHANGED alarm occurs here 
+      yield* talk("Vega", "Well, anyway, here we go again.");
+      yield* talk("Past Vega", "What do you mean?");
+      yield* talk("Vega", "Well, based on the pattern so far, I think I’m about to disappear. Good luck on your mission!");
+      yield* setFutureHasChanged();
+
       break;
     }
   }
-  yield* talk("Vega", "Ooookay, here we go again.");
-  yield* talk("Past Vega", "What do you mean?");
-  yield* talk("Vega", "Well, based on the pattern so far, I think I’m about to disappear. Good luck on your mission!");
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -962,6 +1020,8 @@ function* speakToCaptainSharp21(): Cinematic {
 }
 
 export function* thrownInPastForThirdTime(): Cinematic {
+  yield* playSong("time travel");
+  yield* pause(4);
   yield* setLocation(Locations.Alleyway);
 }
 
@@ -1016,12 +1076,13 @@ function* speaktoPV22(): Cinematic {
       yield* talk("Past Vega", "It must be the CHRONONS!!! I’ll get to researching them as fast as I can!");
       yield* talk("Vega", "Sounds good. And if you could compile what you learn in some kind of journal, I’d appreciate it lots.");
       yield* talk("Past Vega", "Can do!");
-      // TODO: the YOU'VE CHANGED alarm occurs here 
+      yield* talk("Vega", "Alright. Now I’m going to disappear. Please don’t scream. This is normal.");
+      yield* talk("Past Vega", "Huh?");
+      yield* setFutureHasChanged();
       break;
     }
   }
-  yield* talk("Vega", "Alright. Now I’m going to disappear. Please don’t scream. This is normal.");
-  yield* talk("Past Vega", "Huh?");
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1076,7 +1137,11 @@ function* speakToCaptainSharp31(): Cinematic {
 }
 
 export function* thrownInPastForFourthTime(): Cinematic {
+  canEnterHouse = true;
+  yield* playSong("time travel");
+  yield* pause(4);
   yield* setLocation(Locations.House);
+  yield* pause(1.5);
 }
 
 function* speakToPV31(): Cinematic {
@@ -1097,10 +1162,10 @@ function* speakToPV31(): Cinematic {
   yield* talk("Vega", "You’ll read the journal. You’ll learn all about chronons and the Canadian mafia and Doctor Scramble. And you’ll remember the one thing I’m asking you to do for me before December comes around again: make a copy of the time ray that reverses the effects of the original. You get me?");
   yield* talk("Past Vega", "I do.");
   yield* talk("Vega", "Good.");
-  // TODO: the YOU'VE CHANGED alarm occurs here
-
   yield* talk("Vega", "See you later, Vega.");
   yield* talk("Past Vega", "Wait, before you go, can you—");
+
+  yield* setFutureHasChanged();
 }
 
 
@@ -1135,6 +1200,7 @@ function* speakToCaptainSharp41(): Cinematic {
   yield* talk("Vega", "NOT NOW, SHARP! Okay. So I can’t do either. What if I do nothing?");
   yield* talk("Doctor Scramble", "That would be so boring, wouldn’t it? Let’s make things a bit more interesting.");
   yield* narrate("Doctor Scramble pulls out a BUTTON.");
+  yield* playSong("time ray SUPERCHARGING");
   yield* talk("Doctor Scramble", "If you do nothing for 15 seconds, I press this reset button. Everything— you, your progress, your memory— it all resets.");
   yield* talk("Vega", "You’re evil.");
   yield* talk("Doctor Scramble", "MUAHAHA! I suppose so. But I’ll even throw you a bone: I’ll tell you, for free, that I’ve told at least one lie. So, Vega, what'll it be?");
@@ -1181,28 +1247,51 @@ function* speakToCaptainSharp41(): Cinematic {
 /////////////////////////////////////////////////////////////////////
 
 export function* startDreamSequence(): Cinematic {
-  if (Checkpoint === Checkpoints["Game Start"]) {
-    yield* talk("Vega", "Oh god, it’s happening again. The same feeling as when I got hit by that ray.");
-    yield* talk("Other Vega", "What the hell?! You’re disappearing!");
-    // TODO (maybe): vega avatar fades 
+  const actions = yield "next";
+  actions.setFutureHasChanged(false);
+
+  if (Checkpoint === Checkpoints["Time Travel"]) {
+    yield* talk("Vega", "I believe in you!!!");
+    // TODO: Vega fades
+    yield* talk("Past Vega", "Dammit! I was going to ask her to help me move in.");
 
     yield* setMode("DreamSequence");
-    yield* dreamTalk("...You feel yourself being pushed through the void...");
-    yield* dreamTalk("...It feels like every atom of your body is encased in its own marshmallow...");
-    yield* dreamTalk("...Knowledge of the identity of Doctor Scramble gradually flows into your mind...");
-    yield* dreamTalk("...T i m e   t o   s o l i d i f y...");
+    yield* playSong("time ray");
+    yield* dreamTalk(".....");
+    yield* dreamTalk("...The void is silent...");
+    yield* dreamTalk(".....");
+    yield* dreamTalk("...........");
+    yield* dreamTalk("........................");
     yield* setMode("Future");
-    yield* setCheckpoint(Checkpoints["Doctor Scramble"]);
+    yield* setCheckpoint(Checkpoints["Time Ray"]);
     yield* setLocation(Locations.DarkBG);
+
     canEnterHouse = false;
     hasntSeenEnterAlleyway = true;
   }
-  if (Checkpoint === Checkpoints["Doctor Scramble"]) {
+  else if (Checkpoint === Checkpoints["Canadian French"]) {
+    yield* talk("Past Vega", "AAAAAAAAAAAAA");
+    yield* talk("Vega", "Look, what did I JUST—");
+    // TODO: vega fades
+
+    yield* setMode("DreamSequence");
+    yield* playSong("time ray");
+    yield* dreamTalk("...The feeling of every fabric of your body dispersing into the void is now familiar to you...");
+    yield* dreamTalk("...Your can feel the knowledge of the physics of time entering your brain...");
+    yield* dreamTalk("...T i m e   t o   s o l i d i f y...");
+    yield* setMode("Future");
+    yield* setCheckpoint(Checkpoints["Time Travel"]);
+    yield* setLocation(Locations.DarkBG);
+    canEnterHouse = true;
+    hasntSeenEnterAlleyway = true;
+  }
+  else if (Checkpoint === Checkpoints["Doctor Scramble"]) {
     yield* talk("Past Vega", "What? You can’t just leave like that! I still have so many questions!");
     yield* talk("Vega", "I can’t hear youuuu I’m dissociatingggg");
     // TODO: vega fades
 
     yield* setMode("DreamSequence");
+    yield* playSong("time ray");
     yield* dreamTalk("...You're back in the void again...");
     yield* dreamTalk("...Your mind fills with knowledge of Canadian French...");
     yield* dreamTalk("...Tu recommences à te réveiller...");
@@ -1213,33 +1302,20 @@ export function* startDreamSequence(): Cinematic {
     canEnterHouse = false;
     hasntSeenEnterAlleyway = true;
   }
-  if (Checkpoint === Checkpoints["Canadian French"]) {
-    yield* talk("Past Vega", "AAAAAAAAAAAAA");
-    yield* talk("Vega", "Look, what did I JUST—");
-    // TODO: vega fades
+  else if (Checkpoint === Checkpoints["Game Start"]) {
+    yield* talk("Vega", "Oh god, it’s happening again. The same feeling as when I got hit by that ray.");
+    yield* talk("Other Vega", "What the hell?! You’re disappearing!");
+    // TODO (maybe): vega avatar fades 
 
     yield* setMode("DreamSequence");
-    yield* dreamTalk("...The feeling of every fabric of your body dispersing into the void is now familiar to you...");
-    yield* dreamTalk("...Your can feel the knowledge of the physics of time entering your brain...");
+    yield* playSong("time ray");
+    yield* dreamTalk("...You feel yourself being pushed through the void...");
+    yield* dreamTalk("...It feels like every atom of your body is encased in its own marshmallow...");
+    yield* dreamTalk("...Knowledge of the identity of Doctor Scramble gradually flows into your mind...");
     yield* dreamTalk("...T i m e   t o   s o l i d i f y...");
     yield* setMode("Future");
-    yield* setCheckpoint(Checkpoints["Time Travel"]);
+    yield* setCheckpoint(Checkpoints["Doctor Scramble"]);
     yield* setLocation(Locations.DarkBG);
-    canEnterHouse = true;
-    hasntSeenEnterAlleyway = true;
-  }
-  if (Checkpoint === Checkpoints["Time Travel"]) {
-    yield* talk("Vega", "I believe in you!!!");
-    // TODO: Vega fades
-    yield* talk("Past Vega", "Dammit! I was going to ask her to help me move in.");
-
-    yield* setMode("DreamSequence");
-    yield* dreamTalk(".....");
-    yield* dreamTalk("...The void is silent...");
-    yield* setMode("Future");
-    yield* setCheckpoint(Checkpoints["Time Ray"]);
-    yield* setLocation(Locations.DarkBG);
-
     canEnterHouse = false;
     hasntSeenEnterAlleyway = true;
   }
@@ -1247,21 +1323,29 @@ export function* startDreamSequence(): Cinematic {
 
 // while (true) {
 
-  // const result = yield* prompt([
-  //   "Blah blah one?",
-  //   "Blah blah two?",
-  //   "Blah blah three?",
-  // ]);
+// const result = yield* prompt([
+//   "Blah blah one?",
+//   "Blah blah two?",
+//   "Blah blah three?",
+// ]);
 
-  // if (result === 0) {
-  //   yield* talk("Vega", "Oh NO! You chose one.");
-  // }
+// if (result === 0) {
+//   yield* talk("Vega", "Oh NO! You chose one.");
+// }
 
-  // if (result === 1) {
-  //   yield* setLocation(Locations.HQ);
-  //   break;
-  // }
+// if (result === 1) {
+//   yield* setLocation(Locations.HQ);
+//   break;
+// }
 
-  // }
+// }
 
-  // setDialog BLAH BLAH={}u
+// setDialog BLAH BLAH={}u
+
+export function* pause(seconds: number): Cinematic {
+  let start = Date.now();
+
+  while (Date.now() - start < seconds * 1000) {
+    yield "next";
+  }
+}

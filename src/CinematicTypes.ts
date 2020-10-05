@@ -67,7 +67,7 @@ export type LiveEvent = {
 }
 
 export type Location = {
-  description: Cinematic;
+  description: () => Cinematic;
   name: LocationName;
   interactors: () => ({
     name: Person;

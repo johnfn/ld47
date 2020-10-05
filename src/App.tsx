@@ -5,7 +5,7 @@ import { PortraitAndActions } from './PortraitAndActions';
 import { PortraitAndDialogBox } from './PortraitAndDialogBox';
 import { Keyboard } from './Keyboard';
 import { Cinematic, GameMode, Location } from './CinematicTypes';
-import { Checkpoints, enterDarkBG, Locations, Person, setCheckpointNoYield, startDreamSequence, startGame, thrownInPastForFirstTime } from './Data';
+import { Checkpoints, enterAlleyway, enterDarkBG, Locations, Person, setCheckpointNoYield, startDreamSequence, startGame, thrownInPastForFirstTime } from './Data';
 import { Overlay } from './Overlay';
 import { FutureDate, TextModifier } from './Cinematics';
 import { Background } from './Background';
@@ -98,7 +98,7 @@ const App = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const whichCinematic = Number(urlParams.get("cinematic"));
 
-    Debug = true;
+    Debug = urlParams.get("cinematic") === null ? false : true;
 
     if (whichCinematic === 0) {
       setCheckpointNoYield(Checkpoints["Game Start"]);
@@ -115,6 +115,9 @@ const App = () => {
     } else if (whichCinematic === 4) {
       setCheckpointNoYield(Checkpoints["Time Ray"]);
       cinematicToRun = enterDarkBG();
+    } else if (whichCinematic === 10) {
+      setCheckpointNoYield(Checkpoints["Game Start"]);
+      cinematicToRun = enterAlleyway();
     } else {
       cinematicToRun = startGame();
       Debug = false;
