@@ -8,7 +8,7 @@ const locationFiles: { [K in LocationNames]: string } = {
   'Alleyway': 'alley2',
   'DarkBG': 'ld47 bar',
   'HQ': 'ld47 science',
-  'FamiliarHouse': 'ld47 house',
+  'House': 'ld47 house',
 }
 
 export const Background = ({ location }: { location: Location }) => {
