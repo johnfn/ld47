@@ -9,6 +9,9 @@ export type Person =
   | 'Vega'
   | 'Captain Sharp'
   | 'Narrator'
+  | 'Past Vega'
+  | 'Voice from inside'
+  | 'Both Vegas'
 
 const Bar: Location = {
   name: 'Bar',
@@ -160,6 +163,40 @@ function* speakToCaptainSharp0(): Cinematic {
 
   yield* setMode("Past");
   // yield* setLocation(Locations.Bedroom);
+}
+
+function* speakToPV01(): Cinematic {
+  yield* talk("Vega", "Hey, it’s my old house!");
+  yield* talk("Vega", "Wait, why are the people inside moving out already? I didn’t sell it THAT long ago… I hope I didn’t leave behind any pests or broken appliances or anything.");
+  yield* talk("Vega", "It’s cool that they’re using the same moving company as I did, though. Glad they took my recommendation!");
+  yield* talk("Vega", "Hey, the door’s open. If they’re already moving out, I’m sure they wouldn’t mind if I took a peek inside…");
+  yield* talk("Voice from inside", "One last box! So glad this is finally almost over. I should’ve asked some of my friends to help me move out.");
+  yield* talk("Vega", "Wait a minute… that sounds like… ");
+  yield* talk("Past Vega", "Ah, there we go! Now, who—");
+  yield* talk("Vega", "...");
+  yield* talk("Past Vega", "...");
+  yield* talk("Vega", "?!");
+  yield* talk("Past Vega", "?!?!?!?!");
+  yield* talk("Both Vegas", "WHAAAAAAAAAAAAT");
+  yield* talk("Vega", "No. This isn’t possible.");
+  yield* talk("Past Vega", "Oh god please just kill me quickly");
+  yield* talk("Vega", "What? Why would I do that?!");
+  yield* talk("Past Vega", "I assumed that NATCH found out about my illegal barbecue sauce collection so they cloned a version of me without any kleptomaniac tendencies and have sent that clone to my house to kill me before I could ask any questions.");
+  yield* talk("Vega", "Huh? We would never do that!");
+  yield* talk("Past Vega", "So you DO work for NATCH! Do your worst, evil me!");
+  yield* talk("Vega", "I’M NOT EVIL YOU! I… think I’m from the future? Or a different dimension? I’m not sure. But I’m NOT here to kill you. I AM you. ");
+  yield* talk("Past Vega", "Yeah? Prove it.");
+  yield* talk("Vega", "I… uh… Oh, I have a birthmark on my elbow. ");
+  yield* talk("Past Vega", "NATCH could’ve found that out from the physical I took last week. Not convinced.");
+  yield* talk("Vega", "Um… I hate and will never eat tomatoes.");
+  yield* talk("Past Vega", "Easily observable behavior. Three strikes and you’re out, evil me. ");
+  yield* talk("Vega", "GOD Uh… Uh… ");
+  yield* talk("Vega", "*Sigh*");
+  yield* talk("Vega", "...my favorite flavor of barbecue sauce is Sweet Baby Ray’s Hickory & Brown Sugar.");
+  yield* talk("Past Vega", "Whoa, you ARE me from the future!!!");
+  yield* talk("Vega", "Gee. Ya think.");
+  yield* talk("Past Vega", "Well, come inside. I’m sure you’re here for a good reason.");
+  yield* talk("Vega", "I wouldn’t bet on it.");
 }
 
 function* enterBar(): Cinematic {

@@ -22,8 +22,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
     let actionText = "";
     let nextDialog: CinematicEvent = { type: "describe", text: "" };
 
-    console.log(events);
-    markActionAsTaken(events[events.length - 1].id)
+    markActionAsTaken(events[events.length - 1].id);
 
     switch (action) {
       case "Explore": {
@@ -140,7 +139,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
         status: "running",
       }
     ]);
-  }, [location.name, JSON.stringify(inventory)]);
+  }, [location.name, JSON.stringify(inventory), events.length]);
 
   // TODO: This (setting width:160) is a hacky way of aligning divs pixel-perfectly,
   // might break stuff. 
@@ -184,7 +183,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
                   // I dont get what this does
                   //disabled = event.options.length > 0; 
 
-                  disabled = event.hasTakenAction;
+                  disabled = event.hasTakenAction && event.options.length > 0;
                   break;
                 }
 

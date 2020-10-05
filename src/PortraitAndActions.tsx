@@ -1,5 +1,5 @@
 import React from 'react';
-import Portrait from './images/portrait.png';
+import PortraitPng from './images/portrait.png';
 import { Cinematic, Location } from './CinematicTypes';
 import { Locations } from './Data';
 import { runEvents } from './Cinematics';
@@ -95,13 +95,14 @@ export const PortraitAndActions = ({ location, setCinematics }: {
 
   return (<div style={{ display: "flex" }}>
     <div style={{
-      backgroundImage: `url("${Portrait}")`,
+      backgroundImage: `url("${PortraitPng}")`,
       backgroundSize: '100%',
       backgroundColor: "white",
       width: 130,
       height: 180,
       border: '1px solid black'
     }} />
+    <PortraitPng fileName={"portrait"} />
     {/* <div style={{
       display: "flex",
       flexDirection: "row",
