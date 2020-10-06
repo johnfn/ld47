@@ -33,14 +33,14 @@ export const Portrait = ({ person, speaking }: { person: Person, speaking: boole
 
   const test = require(`./images/Bartender.png`) // this works for caching
 
-  const path = `./images/${portraitFiles[person]}.png`;
+  const path = `./images/Portraits/${portraitFiles[person]}.png`;
 
   const border = portraitFiles[person] != "nobody" ? '1px solid black' : '1px solid transparent';
 
   return (<img className={speaking ? "speaker-active" : "speaker"} draggable="false" style={{
     width: 130,
-    height: 180,
+    height: 217,
     border: border,
-  }} src={require(`${path}`)} alt="product" />
+  }} src={require(`${path}`)} alt="product" /> 
   );
 }

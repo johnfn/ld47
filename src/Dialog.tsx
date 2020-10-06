@@ -152,7 +152,7 @@ export const Prompt: React.FC<{ prompt: PromptEvent, color: HSL }> = ({ prompt, 
   const [hovered, setHovered] = React.useState<number | null>(null);
 
   return (
-    <div style={{ color: `hsl(${h}, ${s}%, ${l}%)` }}>
+    <div style={{ color: `hsl(${h}, ${s}%, ${l}%)`, marginTop: 10 }}>
       {
         prompt.options.map((option, i) =>
           <div
@@ -163,7 +163,7 @@ export const Prompt: React.FC<{ prompt: PromptEvent, color: HSL }> = ({ prompt, 
               {PromptSelectionKeys[i]}:
             </div>
 
-            <div style={{ flex: '1 0 0', color: hovered === i ? "black" : "inherit" }}>
+            <div style={{ flex: '1 0 0', color: "inherit" }}>
               {option}
             </div>
           </div>

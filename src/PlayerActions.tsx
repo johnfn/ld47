@@ -154,7 +154,7 @@ export const PlayerActions = ({ events, inventory, location, setCinematics, allo
                       e.currentTarget.blur();
                     }}
                     disabled={disabled}
-                    style={{ border: "none", margin: 1 }}>
+                    style={{ fontSize: 16, border: "none", margin: 1 }}>
                     {action}
                     {i === 0 ? " (Q)" : null}
                     {i === 1 ? " (W)" : null}
