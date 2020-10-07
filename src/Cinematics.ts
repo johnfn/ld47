@@ -387,7 +387,7 @@ export function* setLocation(newLocation: Location): Cinematic {
     yield* playSong("HQ");
   } else if (newLocation.name === "House") {
     yield* playSong("Another Me");
-  } else if (newLocation.name === "Outdoors") {
+  } else if (newLocation.name === "MainStreet") {
     yield* playSong("city");
   }
 
@@ -495,7 +495,7 @@ export function* explore(location: Location): Cinematic {
   }
 
   const result = yield* prompt(
-    exits.map(exit => exit.toLowerCase() === "outdoors" ? "Go outdoors" : "Go to " + exit)
+    exits.map(exit => "Go to " + (exit === "MainStreet" ? "main street" : exit.toLowerCase()))
   );
 
   yield* setLocation(Locations[exits[result]]);
@@ -521,9 +521,9 @@ export function* showInventory(inventory: Inventory): Cinematic {
   } else if (item === "dunkin donuts coffee") {
     yield* narrate("Mmm. Coffee. Amazing.");
   } else if (item === "root beer") {
-    yield* narrate("It's root beer you got from the Royal Skillet.");
+    yield* narrate("It's root beer you got from the Royal Skillet. Doesn't seem too useful here.");
   } else if (item === "strawberry frilly thing") {
-    yield* narrate("It's a pile of frills in a cup.");
+    yield* narrate("It's a pile of frills in a cup. Looking at it, you feel just a little bit manlier.");
   }
 }
 

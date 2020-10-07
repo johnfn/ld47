@@ -16,13 +16,14 @@ const blue: HSL = { h: 215, s: 80, l: 50 };
 const black: HSL = { h: 0, s: 0, l: 0 };
 const gray: HSL = { h: 0, s: 0, l: 45 };
 const yellow: HSL = { h: 25, s: 90, l: 45 };
+const green: HSL = { h: 89, s: 73, l: 37 };
 
 const textColors: { [K in DisplayedEvent['type']]: HSL } = {
   "dialog": black,
   "background-dialog": red,
   "prompt": yellow,
-  "describe": black,
-  "action": yellow,
+  "describe": green,
+  "action": blue,
   "dream-dialog": black, // never used but idk how types work weeeeeeeeeeeeeeeeeeeeeeeeee
 }
 
@@ -52,8 +53,8 @@ export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp
 
   let fadeAmount = clamp({ x: index / maxDialogsToDisplay, low: 0, high: 0.8 });
 
-  if (happenedInPast && fadeAmount < 0.6) {
-    fadeAmount = 0.6;
+  if (happenedInPast && fadeAmount < 0.7) {
+    fadeAmount = 0.7;
   }
 
   const fadedColor: HSL = {
@@ -62,19 +63,17 @@ export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp
     l: initialColor.l + (100 - initialColor.l) * fadeAmount
   };
 
-  // dont show timestamp in the future
-  showTimestamp = mode != 'Future' ? showTimestamp : false;
 
   switch (event.type) {
     case "dialog":
     case "background-dialog": {
-      return <Dialog event={event} showTimestamp={showTimestamp} color={fadedColor} showSpeaker={showSpeaker} />
+      return <Dialog event={event} showTimestamp={showTimestamp} color={fadedColor} showSpeaker={showSpeaker} mode={mode} />
     }
     case "prompt": {
       return <Prompt prompt={event} color={fadedColor} />
     }
     case "describe": {
-      return <Describe event={event} color={fadedColor} />
+      return <Describe event={event} color={fadedColor} mode={mode} />
     };
     case "action": {
       return <Actions event={event} onClick={(id: string) => { markActionAsTaken(id) }} color={fadedColor} />
@@ -85,8 +84,10 @@ export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp
   return (<div></div>)
 }
 
-export const Dialog = ({ event: { speaker, text, time, type, modifier }, showTimestamp, color, showSpeaker }:
-  { event: DisplayedDialog | DisplayedBackgroundDialog; showTimestamp: boolean; color: HSL; showSpeaker: boolean }) => {
+export const Dialog = ({ event: { speaker, text, time, type, modifier }, showTimestamp, color, showSpeaker, mode }:
+  {
+    event: DisplayedDialog | DisplayedBackgroundDialog; showTimestamp: boolean; color: HSL; showSpeaker: boolean; mode: GameMode;
+  }) => {
   const [isHovered, setIsHovered] = React.useState(false);
 
   const { h, s, l } = color;
@@ -110,7 +111,7 @@ export const Dialog = ({ event: { speaker, text, time, type, modifier }, showTim
           style={{ display: 'flex', justifyContent: "space-between", }}
         >
           <div style={{ flex: '2 0 0' }}>{speaker.toUpperCase()}</div>
-          <div style={{ flex: '1 0 0', color: `hsl(${h},${0}%,${timestampLightness}%)`, textAlign: "right" }}>{(showTimestamp || isHovered) && time}</div>
+          <div style={{ flex: '1 0 0', color: `hsl(${h},${0}%,${timestampLightness}%)`, textAlign: "right" }}>{(mode === 'Past' && (showTimestamp || isHovered)) && time}</div>
         </div>
       }
 
@@ -178,7 +179,7 @@ export const Prompt: React.FC<{ prompt: PromptEvent, color: HSL }> = ({ prompt, 
   )
 };
 
-export const Describe = ({ event, color }: { event: DisplayedDescribe, color: HSL }) => {
+export const Describe = ({ event, color, mode }: { event: DisplayedDescribe, color: HSL, mode: GameMode, }) => {
   // TODO: get showTimestamp prop
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -201,7 +202,7 @@ export const Describe = ({ event, color }: { event: DisplayedDescribe, color: HS
         style={{ display: 'flex', justifyContent: "space-between" }}
       >
         <div style={{ flex: '1 0 0' }}>NARRATOR</div>
-        <div style={{ flex: '1 0 0', color: `hsl(${h},${0}%,${timestampLightness}%)`, textAlign: "right" }}>{isHovered && event.time}</div>
+        <div style={{ flex: '1 0 0', color: `hsl(${h},${0}%,${timestampLightness}%)`, textAlign: "right" }}>{(mode === 'Past' && isHovered && event.time)}</div>
       </div>
       <div style={{ marginLeft: 10 }}>{event.text}</div>
     </div>

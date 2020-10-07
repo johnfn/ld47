@@ -4,7 +4,7 @@ import { LocationNames } from './Data';
 
 const locationFiles: { [K in LocationNames]: string } = {
   'Bar': 'ld47 bar',
-  'Outdoors': 'city2',
+  'MainStreet': 'city2',
   'Alleyway': 'alley2',
   'DarkBG': 'darkbg',
   'HQ': 'ld47 science',

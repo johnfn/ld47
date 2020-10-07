@@ -7,7 +7,7 @@ export const Overlay: React.FC<{
 }> = ({ opacity, displayedEvents }) => {
   const dreamEvents: DisplayedDreamDialog[] = [];
 
-  console.log(displayedEvents);
+  // console.log(displayedEvents);
 
   for (let i = displayedEvents.length - 1; i >= 0; i--) {
     const ev = displayedEvents[i];
@@ -53,7 +53,7 @@ export const Overlay: React.FC<{
       pointerEvents: 'none',
     }}>
       <div style={{
-        border: "1px solid white",
+        border: "none",
         margin: "75px auto",
         padding: 30,
         width: APP_WIDTH - 400,

@@ -56,7 +56,7 @@ const Bar: Location = {
     ];
   },
   exits: [
-    'Outdoors',
+    'MainStreet',
     'Alleyway',
   ],
   liveEvents: [{
@@ -66,8 +66,8 @@ const Bar: Location = {
   actions: ['Explore', 'Inventory', 'Interact'],
 }
 
-const Outdoors: Location = {
-  name: 'Outdoors',
+const MainStreet: Location = {
+  name: 'MainStreet',
   description: enterOutside,
   interactors: () => {
     return [
@@ -112,7 +112,7 @@ const House: Location = {
       }
     ];
   },
-  exits: ["Outdoors"],
+  exits: ["MainStreet"],
   liveEvents: [],
   actions: ['Explore', 'Inventory', 'Interact'],
 }
@@ -158,7 +158,7 @@ const Alleyway: Location = {
       },
     ]
   },
-  exits: ["Bar", "Outdoors"],
+  exits: ["Bar", "MainStreet"],
   liveEvents: [
   ],
   actions: ['Explore', 'Inventory', 'Interact'],
@@ -227,14 +227,14 @@ const HQ: Location = {
 export type LocationNames =
   | 'Bar'
   | 'House'
-  | 'Outdoors'
+  | 'MainStreet'
   | 'Alleyway'
   | 'DarkBG'
   | 'HQ'
 
 export const Locations: AllLocations = {
   Bar,
-  Outdoors,
+  MainStreet,
   Alleyway,
   DarkBG,
   HQ,
@@ -436,7 +436,7 @@ function* enterHouse(): Cinematic {
   debugger;
 
   if (canEnterHouse === false) {
-    yield* setLocation(Locations.Outdoors);
+    yield* setLocation(Locations.MainStreet);
     if (Checkpoint === Checkpoints["Game Start"]) {
       yield* narrate("You can't just enter a random house! ...There is something familiar about it, though.");
       yield* narrate("Maybe you should inspect it more closely.");
@@ -447,13 +447,13 @@ function* enterHouse(): Cinematic {
     if (Checkpoint === Checkpoints["Game Start"]) {
       // bc canEnterHouse is false right? or is that happening when its also true // it's happening when true. i'm in the house but the text isn't activating
       // try uhh 
-      console.log(canEnterHouse);
-      console.log(speakToPV02);
+      // console.log(canEnterHouse);
+      // console.log(speakToPV02);
       yield* speakToPV02(); // this line isn't automatically showing up when u enter house and i'm not sure why
 
     } if (Checkpoint === Checkpoints["Doctor Scramble"]) {
-      console.log(canEnterHouse);
-      console.log(speakToPV12);
+      // console.log(canEnterHouse);
+      // console.log(speakToPV12);
       yield* speakToPV12();
 
     } if (Checkpoint === Checkpoints["Canadian French"]) {
@@ -570,40 +570,40 @@ function* speakToShadyGuy(): Cinematic {
 
     if (result === 1) {
       if (!talkedToPastScramble) {
-        console.log(talkedToPastScramble);
-        yield* talk("Vega", "Le chat scintille de lait de castor. ");
-        yield* talk("Shady Guy", "Ah, tres bien. What may I do for you, camarade? ");
-        yield* talk("Vega", "Oh! Um, I would like to speak to Scramble, please. ");
-        yield* talk("Shady Guy", "Very good. I shall retrieve him, tout suite. ");
+        // console.log(talkedToPastScramble);
+        yield* talk("Vega", "Le chat noir brille de lait de castor. ");
+        yield* talk("Shady Guy", "Ah, très bien. What may I do for you, mon ami? ");
+        yield* talk("Vega", "Oh! Euh, je voudrais un moment avec Monsieur Scramble, please.");
+        yield* talk("Shady Guy", "Very good. I shall retrieve him, tout de suite. ");
         yield* talk("Vega", "Wow, I can’t believe that worked. Nice job on getting that passcode, past me. ");
-        yield* talk("Past Scramble", "Salut, salut! Always a joy to see one of our sisters from the Montréal branch. May I ask, what is your business here today? ");
-        yield* talk("Vega", "Oh! Good question. Well, um, as an aspiring and rising mafia leader myself, I was in the area and thought I would drop by to ask you if you had any sage advice on how to, uh, run a mob! I hear you’re a very talented person. ");
-        yield* talk("Past Scramble", "Ah, of course! I should’ve guessed. I am happy to regale you with tales of my achievements. But this is quite a long story—perhaps we may share a drink first? ");
-        yield* talk("Vega", "More than happy to! ");
+        yield* talk("Past Scramble", "Salut, salut ! Always a joy to see one of our soeurs de la branche de Montréal. May I ask, what is your business here today? ");
+        yield* talk("Vega", "Oh ! Bonne question. Well, euhh, as an aspiring and rising mafia leader myself, I was in the area and thought I would drop by to ask you if you had any sage advice on how to, euh, how do you say, run a mob ! I hear you have beaucoup de talent in this area. ");
+        yield* talk("Past Scramble", "Ah, of course ! Oui, I should’ve guessed. I am happy to regale you with tales of mes réussites. Par contre, this is quite a long story — perhaps we may share a drink first ? ");
+        yield* talk("Vega", "Bonne idée - happy to! ");
         yield* talk("Past Scramble", "Garçon! S'il vous plaît! ");
         yield* narrate("Many drinks later...", ["slow"]);
         yield* talk("Past Scramble", "...aNd EveN shO, tHe OtheR ScieNtiSHtsh wOuLDn’T shToP maKinG fUn of mE!! cAn yOu BeLieVE IT?!! ");
-        yield* talk("Vega", "Insane! But you are so skilled and talented! ");
-        yield* talk("Past Scramble", "I KNOW! *gulp* ");
-        yield* talk("Past Scramble", "But, here’s the thing. I got the last laugh on THEM. You know why? Because... my research into time theory actually WENT somewhere! Those jerks can have their tHeOriES, but I’m working on a device that can actually TAKE SOMEONE THROUGH TIME!!! How cool is that?!! They never saw my true potential. ");
-        yield* talk("Vega", "Incroyable! How does it work? ");
-        yield* talk("Past Scramble", "Well, I probably shouldn’t tell you... HAH! But who can stop me! You see, floating everywhere through the universe are teeeeny tiiiiny particles called ‘chronons’. They’re just bumping about the quantum time field that permeates throughout all of space, but their interactions with the atoms in your body are what make YOU go through time. And me. And EVERYONE. ");
-        yield* talk("Vega", "Fascinante! ");
-        yield* talk("Past Scramble", "But, if you can manipulate the chronon-fermion interactions in a particular way, you might be able to interfere with something’s or someONE’s chronon alignment such that it could send them HURTLING THROUGH TIME! Isn’t that an exciting thought?! ");
-        yield* talk("Vega", "Ah yes, absolument! Perspicace! Élégante! I would love to stay and hear more, but I believe I am late for a meeting. ");
-        yield* talk("Past Scramble", "Of course! You should be on your way. I myself am magnificently busy as well. ");
-        yield* talk("Vega", "Well, Doctor, it’s been lovely. Do take care. ");
+        yield* talk("Vega", "Incroyable ! But you are so skilled and talented ! ");
+        yield* talk("Past Scramble", "OUI ! *gulp* C'EST ABSOLUMENT *gulp* ABSURDE ! ");
+        yield* talk("Past Scramble", "Mais, écoutez, here’s the thing. I got the last laugh on THEM. You know why ? Because... my research into time theory actually WENT somewhere ! Those jerks can have their tHeOriES, but I’m working on a device that can actually TAKE SOMEONE THROUGH TIME!!! How cool is that?!! They never saw mon plein potentiel. ");
+        yield* talk("Vega", "Phénoménal ! How does it work ? ");
+        yield* talk("Past Scramble", "Well, I probably shouldn’t tell you... HAH ! But who can stop me ! You see, floating everywhere through the universe are teeeeny tiiiiny - vraiment TOUT PETIT - particles called ‘chronons’. They’re just bumping about the, how do I say, quantum time field that permeates throughout all of space, but their interactions with the atoms in your body are what make YOU go through time. And me. And TOUT LE MONDE. ");
+        yield* talk("Vega", "C'est fascinant ! ");
+        yield* talk("Past Scramble", "Mais, if you can manipulate the chronon-fermion interactions in a particular way, you might be able to interfere with something’s or someONE’s chronon alignment such that it could send them HURTLING THROUGH TIME ! Isn’t that an exciting thought?! ");
+        yield* talk("Vega", "Ah yes, absolument ! Perspicace ! Élégant ! I would love to stay and hear more, but I believe I am late for a rendez-vous. ");
+        yield* talk("Past Scramble", "Of course ! You should be on your way. I myself am magnificently busy as well. ");
+        yield* talk("Vega", "Well, Docteur, it’s been lovely. Do take care. ");
         yield* talk("Past Scramble", "Likewise.");
         yield* narrate("You leave the bar.");
-        yield* talk("Past Scramble", "Hmm... 'Doctor'? ");
+        yield* talk("Past Scramble", "Hmm... 'Docteur' ? ");
 
         talkedToPastScramble = true;
-        yield* setLocation(Locations.Outdoors);
+        yield* setLocation(Locations.MainStreet);
         yield* pause(2);
 
         yield* talk("Vega", "Wow, those acting and fake-drinking lessons I had to take for NATCH applications REALLY paid off.");
       } else {
-        yield* talk("Vega", "Le chat scintille de lait de castor. ");
+        yield* talk("Vega", "Le chat noir brille de lait de castor. ");
         yield* talk("Shady Guy", "Ah, I am afraid that Monsieur Scramble is busy. Please return at a later time.");
       }
     }
@@ -799,7 +799,7 @@ function* speakToCaptainSharp01(): Cinematic {
 
 export function* thrownInPastForFirstTime(): Cinematic {
   yield* playSong("time travel");
-  yield* pause(4);
+  yield* pause(3);
   yield* setLocation(Locations.Alleyway);
 }
 
