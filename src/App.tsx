@@ -227,6 +227,7 @@ const App = () => {
 
         <PortraitAndDialogBox
           inventory={inventory}
+          mode={mode}
           events={events}
           location={activeLocation}
           setCinematics={setCinematics}

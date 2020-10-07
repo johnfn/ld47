@@ -1,5 +1,5 @@
 import React from 'react';
-import { PromptEvent, PromptSelectionKeys, DialogEvent, Cinematic } from './CinematicTypes';
+import { PromptEvent, PromptSelectionKeys, DialogEvent, Cinematic, GameMode } from './CinematicTypes';
 import { Actions, Describe, Dialog, DialogComponent, maxDialogsToDisplay, Prompt } from './Dialog';
 import { PlayerActions } from './PlayerActions';
 import { Location } from './CinematicTypes';
@@ -9,7 +9,7 @@ import { Person } from './Data';
 import { reduceEachLeadingCommentRange } from 'typescript';
 
 
-export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setCinematics, inventory, allowInterruptions, futureHasChanged }: {
+export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setCinematics, inventory, allowInterruptions, futureHasChanged, mode }: {
   events: DisplayedEvent[];
   location: Location;
   setCinematics: React.Dispatch<React.SetStateAction<CinematicState[]>>;
@@ -17,6 +17,7 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
   markActionAsTaken: (id: string) => void;
   inventory: Inventory;
   futureHasChanged: boolean;
+  mode: GameMode;
 }) => {
   const speakingEvents: DialogEvent[] = [];
   const promptEvents: PromptEvent[] = [];
@@ -49,11 +50,6 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
     } else {
       setLastSpeaker('You find yourself...') // hack to display no portrait box
     }
-
-    console.log(lastSpeaker);
-
-
-
   }, [events.length, events]);
 
   for (const event of events) {
@@ -162,6 +158,7 @@ export const PortraitAndDialogBox = ({ markActionAsTaken, events, location, setC
                   showTimestamp={showTimestamp}
                   happenedInPast={false}
                   showSpeaker={speaker !== prevSpeaker}
+                  mode={mode}
                 />
 
                 index++;

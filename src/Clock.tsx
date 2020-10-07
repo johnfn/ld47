@@ -8,7 +8,6 @@ export const Clock = ({ dateString, timeString, mode }: {
   mode: GameMode;
 }) => {
   const brokenClockPath = './images/broken_clock.png';
-
   if (mode === "Past") {
     return (
       <div style={{ width: 150 }}>

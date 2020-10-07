@@ -1,7 +1,7 @@
 import React from 'react';
 import useInterval from './ use_interval';
 import { DisplayedAction, DisplayedBackgroundDialog, DisplayedDescribe, DisplayedDialog, DisplayedEvent } from './App';
-import { PromptEvent, PromptSelectionKeys } from './CinematicTypes';
+import { GameMode, PromptEvent, PromptSelectionKeys } from './CinematicTypes';
 
 export const maxDialogsToDisplay = 60;
 
@@ -33,7 +33,7 @@ const clamp = (props: { x: number, low: number, high: number }): number => {
   return Math.min(max, Math.max(min, x));
 }
 
-export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp, happenedInPast, showSpeaker }:
+export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp, happenedInPast, showSpeaker, mode }:
   {
     event: DisplayedEvent;
     markActionAsTaken: (id: string) => void;
@@ -41,6 +41,8 @@ export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp
     showTimestamp: boolean;
     happenedInPast: boolean;
     showSpeaker: boolean;
+    mode: GameMode;
+
   }) => {
   let initialColor = textColors[event.type];
 
@@ -59,6 +61,9 @@ export const DialogComponent = ({ event, markActionAsTaken, index, showTimestamp
     s: initialColor.s,
     l: initialColor.l + (100 - initialColor.l) * fadeAmount
   };
+
+  // dont show timestamp in the future
+  showTimestamp = mode != 'Future' ? showTimestamp : false;
 
   switch (event.type) {
     case "dialog":

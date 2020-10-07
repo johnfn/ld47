@@ -715,7 +715,7 @@ function* talkToBusker(): Cinematic {
 
     if (yield* hasItem("root beer")) {
       yield* narrate("You offer him a sip of root beer.");
-      yield* narrate("He plays a C C' C F F# G C.");
+      yield* narrate("He plays B A G F# G D.");
     } else {
       yield* narrate("His song makes you feel like part of your heart is somewhere else.");
       yield* narrate("You non-violently toss him a coin and he does a one-man kickline.");

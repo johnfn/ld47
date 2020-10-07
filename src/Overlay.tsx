@@ -1,12 +1,45 @@
-import React, { useEffect } from 'react';
-import useInterval from './ use_interval';
+import React from 'react';
 import { APP_HEIGHT, APP_WIDTH, DisplayedDreamDialog, DisplayedEvent } from './App';
 
 export const Overlay: React.FC<{
   opacity: number;
   displayedEvents: DisplayedEvent[];
 }> = ({ opacity, displayedEvents }) => {
-  const dreamEvents = displayedEvents.filter((event): event is DisplayedDreamDialog => event.type === "dream-dialog");
+  const dreamEvents: DisplayedDreamDialog[] = [];
+
+  console.log(displayedEvents);
+
+  for (let i = displayedEvents.length - 1; i >= 0; i--) {
+    const ev = displayedEvents[i];
+
+    if (ev.type === "dream-dialog") {
+      dreamEvents.push(ev);
+    } else {
+      break;
+    }
+
+    // // hi
+    // // give terminal
+    // // now
+    // // hgekgjsdg
+    // // shdgk
+    // hfhehfhs
+
+    // s
+
+    // hahaha i cant compile!!
+    // hehe
+    // console.error(TS);
+
+    // beep boop
+    // hehehehhehe
+
+
+    //console.log("thank u");
+    // i am gabby and i am dumb and i typed this prove me wrong
+  }
+
+  dreamEvents.reverse();
 
   return (
     <div style={{

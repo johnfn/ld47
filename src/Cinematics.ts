@@ -428,6 +428,8 @@ export function* setMode(newMode: GameMode): Cinematic {
   const actions = yield 'next';
   const prevMode = actions.mode;
 
+  actions.setMode(newMode);
+
   if (newMode === "Past") {
     actions.setFutureHasChanged(false);
   }
@@ -444,7 +446,6 @@ export function* setMode(newMode: GameMode): Cinematic {
 
   // Fade to black
   if (prevMode !== newMode && newMode === "DreamSequence") {
-    actions.setMode(newMode);
 
     for (let i = 0; i < 50; i++) {
       actions.setOverlayOpacity((i + 1) / 50);
@@ -455,7 +456,6 @@ export function* setMode(newMode: GameMode): Cinematic {
 
   // Fade from black
   if (prevMode !== newMode && prevMode === "DreamSequence") {
-    actions.setMode(newMode);
 
     for (let i = 0; i < 50; i++) {
       actions.setOverlayOpacity(1 - (i + 1) / 50);
